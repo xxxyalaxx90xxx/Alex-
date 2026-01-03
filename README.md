@@ -1,4 +1,13 @@
-# Alex-# Setup K8S by kubeadm
+# Alex- Setup K8S by kubeadm
+
+> ⚡ **Performance Optimized Version Available!**  
+> See [README_OPTIMIZED.md](README_OPTIMIZED.md) for an improved version with:
+> - Automated configuration (no manual editing)
+> - 3-7 minutes faster setup
+> - Error handling and validation
+> - Idempotent operations
+> 
+> See [PERFORMANCE_ANALYSIS.md](PERFORMANCE_ANALYSIS.md) for detailed analysis of improvements.
 
 ## Install kubelet
 
