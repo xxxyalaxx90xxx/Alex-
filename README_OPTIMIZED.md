@@ -105,7 +105,10 @@ sudo chown "$(id -u):$(id -g)" "$HOME/.kube/config"
 echo "==> Installing Flannel network plugin..."
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.22.0/Documentation/kube-flannel.yml || {
     echo "WARNING: Failed to install Flannel, trying master branch..."
-    kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+    kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml || {
+        echo "ERROR: Failed to install Flannel network plugin from both URLs"
+        exit 1
+    }
 }
 
 # Step 5: Setup Hugepages (optimized)

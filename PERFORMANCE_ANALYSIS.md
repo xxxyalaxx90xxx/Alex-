@@ -22,10 +22,9 @@ sudo vim /etc/containerd/config.toml
 
 **Optimized Solution:**
 ```bash
-# Automated approach using sed
-sudo sed -i 's/^disabled_plugins = \["cri"\]/#disabled_plugins = ["cri"]/' /etc/containerd/config.toml
-# Or using a more robust approach
+# Automated approach using sed - more flexible pattern
 sudo sed -i '/disabled_plugins.*cri/s/^/#/' /etc/containerd/config.toml
+# This pattern matches any variation of disabled_plugins containing "cri"
 ```
 
 **Performance Gain:** Eliminates manual intervention, reduces setup time from minutes to seconds
