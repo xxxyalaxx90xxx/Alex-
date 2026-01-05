@@ -94,10 +94,15 @@ show_main_menu() {
     echo -e "  ${BLUE}14)${NC} Web App Generator (PWA)"
     echo -e "  ${BLUE}15)${NC} AI Integration (Cyborg System)"
     echo
+    echo -e "${CYAN}━━━ Cloud & Infrastructure ━━━${NC}"
+    echo -e "  ${YELLOW}16)${NC} Cloud Integrator (Storage)"
+    echo -e "  ${YELLOW}17)${NC} Container Manager"
+    echo -e "  ${YELLOW}18)${NC} Automation Suite"
+    echo
     echo -e "${CYAN}━━━ Dashboard & Sonstiges ━━━${NC}"
-    echo -e "  ${YELLOW}16)${NC} Dashboard starten"
-    echo -e "  ${YELLOW}17)${NC} Logs anzeigen"
-    echo -e "  ${YELLOW}18)${NC} Einstellungen"
+    echo -e "  ${YELLOW}19)${NC} Dashboard starten"
+    echo -e "  ${YELLOW}20)${NC} Logs anzeigen"
+    echo -e "  ${YELLOW}21)${NC} Einstellungen"
     echo
     echo -e "  ${RED}0)${NC} Beenden"
     echo
@@ -537,6 +542,54 @@ menu_ai_integration() {
     read -p "Drücke Enter zum Fortfahren..."
 }
 
+# Cloud integrator menu
+menu_cloud_integrator() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Cloud Integrator ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/cloud_integrator.sh" ]]; then
+        bash "$SCRIPT_DIR/cloud_integrator.sh"
+    else
+        echo -e "${RED}Error: cloud_integrator.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Container manager menu
+menu_container_manager() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Container Manager ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/container_manager.sh" ]]; then
+        bash "$SCRIPT_DIR/container_manager.sh"
+    else
+        echo -e "${RED}Error: container_manager.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Automation suite menu
+menu_automation_suite() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Automation Suite ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/automation_suite.sh" ]]; then
+        bash "$SCRIPT_DIR/automation_suite.sh"
+    else
+        echo -e "${RED}Error: automation_suite.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
 # Main loop
 main() {
     while true; do
@@ -559,9 +612,12 @@ main() {
             13) menu_apk_builder ;;
             14) menu_webapp_generator ;;
             15) menu_ai_integration ;;
-            16) menu_dashboard ;;
-            17) menu_logs ;;
-            18) menu_settings ;;
+            16) menu_cloud_integrator ;;
+            17) menu_container_manager ;;
+            18) menu_automation_suite ;;
+            19) menu_dashboard ;;
+            20) menu_logs ;;
+            21) menu_settings ;;
             0)
                 clear_screen
                 echo -e "${GREEN}Auf Wiedersehen!${NC}"
