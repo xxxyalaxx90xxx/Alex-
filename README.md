@@ -10,11 +10,24 @@ chmod +x install_k8s.sh
 sudo ./install_k8s.sh
 ```
 
+### Features
+
+The installation script now includes:
+- **Comprehensive logging** with timestamps for better tracking
+- **Automatic validation** of IP addresses and CIDR ranges
+- **Retry logic** for network operations (configurable via MAX_RETRIES and RETRY_DELAY)
+- **Progress indicators** for each installation step
+- **Health checks** at the end to verify cluster status
+- **Detailed summary** of configuration and cluster state
+- **Error handling** with clear error messages
+
 Defaults:
 - `ADVERTISE_ADDRESS`: first host IP (from `hostname -I`)
 - `POD_CIDR`: `10.244.0.0/16`
 - `HUGEPAGES_2MI`: not configured unless set
 - `KUBECONFIG_FILE`: `$HOME/.kube/config`
+- `MAX_RETRIES`: `3` (for network operations)
+- `RETRY_DELAY`: `5` seconds (delay between retries)
 
 ## Install kubelet
 
