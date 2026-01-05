@@ -45,11 +45,14 @@ log() {
   printf '%s %s\n' "$(date +'%Y-%m-%dT%H:%M:%S%z')" "$*"
 }
 
+ISO_DEFAULT="${HOME}/storage/downloads/Win10.iso"
+
 detect_resources() {
   TOTAL_MEM_KB=$(awk '/MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)
   TOTAL_MEM_MB=$((TOTAL_MEM_KB / 1024))
   CPU_CORES=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || echo 1)
   STORAGE_MB=$(df -Pm "${HOME}" 2>/dev/null | awk 'NR==2 {print $4}')
+  [ -z "${STORAGE_MB}" ] && STORAGE_MB=0
   KERNEL=$(uname -r 2>/dev/null || echo "unknown")
   DEVICE_MODEL=$(getprop ro.product.model 2>/dev/null || echo "unknown")
   ANDROID_VERSION=$(getprop ro.build.version.release 2>/dev/null || echo "unknown")
@@ -57,12 +60,15 @@ detect_resources() {
 
 ensure_pkg_updated() {
   log "[1/6] Updating package metadata"
-  pkg update -y >/dev/null
+  pkg update -y
 }
 
 install_packages() {
   log "[2/6] Installing base packages"
-  pkg install -y python python-pip nodejs golang rust openjdk-17 tmux git wget curl jq proot-distro qemu-system-x86_64-headless tigervnc unzip >/dev/null
+  pkg install -y \
+    python python-pip nodejs golang rust openjdk-17 \
+    tmux git wget curl jq proot-distro \
+    qemu-system-x86_64-headless tigervnc unzip
 }
 
 configure_shell() {
@@ -78,11 +84,11 @@ EOF
   fi
 
   BASHRC="${HOME}/.bashrc"
-  if ! grep -q "termux_auto_dashboard" "${BASHRC}" 2>/dev/null; then
+  if ! grep -q "termux-auto helpers" "${BASHRC}" 2>/dev/null; then
     cat >>"${BASHRC}" <<'EOF'
 # termux-auto helpers
 alias ai-dashboard='python $HOME/.local/share/termux-auto/ai_dashboard.py'
-alias vm-win10='$HOME/.local/share/termux-auto/run_win10.sh'
+alias vm-win10='$HOME/.local/share/termux-auto/vm/run_win10.sh'
 alias termux-auto-backup='termux-auto-backup'
 alias termux-auto-restore='termux-auto-restore'
 EOF
@@ -91,7 +97,7 @@ EOF
 
 setup_ai_dashboard() {
   log "[4/6] Preparing AI dashboard (Flask)"
-  python -m pip install --quiet "flask>=2.3,<4" >/dev/null
+  python -m pip install --quiet "flask>=2.3,<3" >/dev/null
   DASH_DIR="${HOME}/.local/share/termux-auto"
   mkdir -p "${DASH_DIR}"
   cat >"${DASH_DIR}/ai_dashboard.py" <<'EOF'
@@ -114,33 +120,51 @@ def info():
 
 if __name__ == "__main__":
     port = int(os.environ.get("AI_DASHBOARD_PORT", "5000"))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="127.0.0.1", port=port)
 EOF
   chmod +x "${DASH_DIR}/ai_dashboard.py"
 }
 
 setup_backup_tools() {
   log "[5/6] Installing backup/restore helpers"
-  BIN_DIR="${PREFIX:-/data/data/com.termux/files/usr}/bin"
+  BIN_DIR="${PREFIX:-$PREFIX_EXPECTED}/bin"
   mkdir -p "${BIN_DIR}"
-  cat >"${BIN_DIR}/termux-auto-backup" <<'EOF'
-#!/data/data/com.termux/files/usr/bin/bash
+  cat >"${BIN_DIR}/termux-auto-backup" <<EOF
+#!${PREFIX_EXPECTED}/bin/bash
 set -euo pipefail
-DEST=${1:-$HOME/storage/shared/termux-auto-backup.tar.gz}
-mkdir -p "$(dirname "${DEST}")"
-tar -czf "${DEST}" -C "${HOME}" .bashrc .tmux.conf .local/share/termux-auto 2>/dev/null
-echo "Backup written to ${DEST}"
+DEST=\${1:-\$HOME/storage/shared/termux-auto-backup.tar.gz}
+if [ ! -d "\$(dirname "\${DEST}")" ]; then
+  DEST="\${HOME}/.local/share/termux-auto/backups/backup.tar.gz"
+fi
+mkdir -p "\$(dirname "\${DEST}")"
+FILES=()
+for file_path in .bashrc .tmux.conf .local/share/termux-auto; do
+  [ -e "\${HOME}/\${file_path}" ] && FILES+=("\${file_path}")
+done
+  if [ "\${#FILES[@]}" -eq 0 ]; then
+    echo "No files to backup."
+    exit 0
+  fi
+  tar -czf "\${DEST}" -C "\${HOME}" "\${FILES[@]}"
+  echo "Backup written to \${DEST}"
 EOF
-  cat >"${BIN_DIR}/termux-auto-restore" <<'EOF'
-#!/data/data/com.termux/files/usr/bin/bash
+  cat >"${BIN_DIR}/termux-auto-restore" <<EOF
+#!${PREFIX_EXPECTED}/bin/bash
 set -euo pipefail
-SRC=${1:-$HOME/storage/shared/termux-auto-backup.tar.gz}
-if [ ! -f "${SRC}" ]; then
-  echo "Backup not found: ${SRC}" >&2
+SRC=\${1:-\$HOME/storage/shared/termux-auto-backup.tar.gz}
+if [ ! -f "\${SRC}" ]; then
+  SRC="\${HOME}/.local/share/termux-auto/backups/backup.tar.gz"
+fi
+if [ ! -f "\${SRC}" ]; then
+  echo "Backup not found: \${SRC}" >&2
   exit 1
 fi
-tar -xzf "${SRC}" -C "${HOME}"
-echo "Restored from ${SRC}"
+if tar -tzf "\${SRC}" | grep -E '(^/)|(\.\.)' >/dev/null; then
+  echo "Refusing to restore archive with unsafe paths: \${SRC}" >&2
+  exit 1
+fi
+tar -xzf "\${SRC}" -C "\${HOME}" --no-same-owner --no-same-permissions
+echo "Restored from \${SRC}"
 EOF
   chmod +x "${BIN_DIR}/termux-auto-backup" "${BIN_DIR}/termux-auto-restore"
 }
@@ -149,18 +173,29 @@ setup_vm_profile() {
   log "[6/6] Preparing Windows 10 VM profile (placeholder)"
   VM_DIR="${HOME}/.local/share/termux-auto/vm"
   mkdir -p "${VM_DIR}"
-  ISO_CANDIDATE="${HOME}/storage/downloads/Win10.iso"
+  ISO_CANDIDATE="${ISO_DEFAULT}"
+  if [ "${TOTAL_MEM_MB}" -eq 0 ]; then
+    VM_RAM=${VM_RAM:-2048}
+  else
+    VM_RAM=${VM_RAM:-$((TOTAL_MEM_MB / 3))}
+  fi
+  [ "${VM_RAM}" -lt 1536 ] && VM_RAM=1536
+  VM_CORES=${VM_CORES:-$CPU_CORES}
+  [ "${VM_CORES}" -lt 1 ] && VM_CORES=1
+  [ "${VM_CORES}" -gt 2 ] && VM_CORES=2
   if [ -f "${ISO_CANDIDATE}" ]; then
     ISO_STATUS="present"
   else
     ISO_STATUS="missing"
   fi
-  cat >"${VM_DIR}/run_win10.sh" <<'EOF'
-#!/data/data/com.termux/files/usr/bin/bash
+  cat >"${VM_DIR}/run_win10.sh" <<EOF
+#!${PREFIX_EXPECTED}/bin/bash
 set -euo pipefail
-ISO_PATH="${HOME}/storage/downloads/Win10.iso"
-DISK_IMG="${HOME}/.local/share/termux-auto/vm/win10.qcow2"
-mkdir -p "$(dirname "${DISK_IMG}")"
+ISO_PATH="${ISO_CANDIDATE}"
+DISK_IMG="${VM_DIR}/win10.qcow2"
+VM_RAM=${VM_RAM}
+VM_CORES=${VM_CORES}
+mkdir -p "${VM_DIR}"
 if [ ! -f "${ISO_PATH}" ]; then
   echo "Windows 10 ISO not found at ${ISO_PATH}. Place the ISO there and rerun." >&2
   exit 1
@@ -168,9 +203,11 @@ fi
 if [ ! -f "${DISK_IMG}" ]; then
   qemu-img create -f qcow2 "${DISK_IMG}" 25G
 fi
-exec qemu-system-x86_64 -m 2048 -smp 2 -enable-kvm -cpu host \
+KVM_ARGS=()
+[ -e /dev/kvm ] && KVM_ARGS=(-enable-kvm -cpu host)
+exec qemu-system-x86_64 -m ${VM_RAM} -smp ${VM_CORES} "${KVM_ARGS[@]}" \
   -drive file="${DISK_IMG}",if=virtio \
-  -cdrom "${ISO_PATH}" -boot once=d -vnc :1 -net nic -net user
+  -cdrom "${ISO_PATH}" -boot once=d -vnc :1 -nic user,model=virtio,restrict=on
 EOF
   chmod +x "${VM_DIR}/run_win10.sh"
   cat >"${VM_DIR}/profile.json" <<EOF
