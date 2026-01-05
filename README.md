@@ -1,5 +1,21 @@
 # Alex-# Setup K8S by kubeadm
 
+## Fully automated install
+
+Run the provided script to install kubeadm/kubelet/kubectl, enable containerd CRI, initialize the control plane, apply flannel, and optionally configure hugepages without manual edits:
+
+```
+chmod +x install_k8s.sh
+# optionally set ADVERTISE_ADDRESS, POD_CIDR, HUGEPAGES_2MI, KUBECONFIG_FILE
+sudo ./install_k8s.sh
+```
+
+Defaults:
+- `ADVERTISE_ADDRESS`: first host IP (from `hostname -I`)
+- `POD_CIDR`: `10.244.0.0/16`
+- `HUGEPAGES_2MI`: not configured unless set
+- `KUBECONFIG_FILE`: `$HOME/.kube/config`
+
 ## Install kubelet
 
 ```
