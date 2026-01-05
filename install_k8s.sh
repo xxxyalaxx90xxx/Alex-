@@ -9,6 +9,8 @@ set -euo pipefail
 #   KUBECONFIG_FILE:    Path to write kubeconfig for kubectl (default: $HOME/.kube/config)
 #   FLANNEL_MANIFEST_URL: URL for the flannel manifest (default pinned commit)
 #   FLANNEL_MANIFEST_SHA256: Expected SHA256 for the flannel manifest (leave empty to skip check)
+#   INSTALL_TRIVY:      Install Trivy security scanner (default: false, set to 'true' to enable)
+#   TRIVY_VERSION:      Trivy version to install (default: 0.58.1, only used if INSTALL_TRIVY=true)
 
 SUDO_CMD="sudo"
 if [ "${EUID:-$(id -u)}" -eq 0 ]; then
@@ -52,6 +54,8 @@ KUBECONFIG_FILE=${KUBECONFIG_FILE:-$HOME/.kube/config}
 FLANNEL_COMMIT=${FLANNEL_COMMIT:-629cd70d816e56853aac967f92ed3dade7275baf}
 FLANNEL_MANIFEST_URL=${FLANNEL_MANIFEST_URL:-"https://raw.githubusercontent.com/flannel-io/flannel/${FLANNEL_COMMIT}/Documentation/kube-flannel.yml"}
 FLANNEL_MANIFEST_SHA256=${FLANNEL_MANIFEST_SHA256:-6583e9607befbf3c46cd04eb6fd960c2a446453b83699d95904bace95f49c410}
+INSTALL_TRIVY=${INSTALL_TRIVY:-false}
+TRIVY_VERSION=${TRIVY_VERSION:-0.58.1}
 
 if [ -z "${ADVERTISE_ADDRESS}" ]; then
   echo "Unable to determine ADVERTISE_ADDRESS automatically. Set ADVERTISE_ADDRESS explicitly." >&2
@@ -165,6 +169,56 @@ cleanup_manifest
 if [ -n "${HUGEPAGES_2MI}" ]; then
   echo "[post] Restart kubelet to pick up hugepages"
   $SUDO_CMD systemctl restart kubelet
+fi
+
+if [ "${INSTALL_TRIVY}" = "true" ]; then
+  echo "[post] Install Trivy security scanner"
+  if ! command_exists wget && ! command_exists curl; then
+    echo "wget or curl is required to download Trivy." >&2
+    exit 1
+  fi
+  
+  TRIVY_ARCH=$(uname -m)
+  case "${TRIVY_ARCH}" in
+    x86_64) TRIVY_ARCH="64bit" ;;
+    aarch64) TRIVY_ARCH="ARM64" ;;
+    *) echo "Unsupported architecture: ${TRIVY_ARCH}" >&2; exit 1 ;;
+  esac
+  
+  TRIVY_URL="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz"
+  trivy_tmp=$(mktemp -d)
+  cleanup_trivy() { rm -rf "${trivy_tmp}"; }
+  trap cleanup_trivy EXIT
+  
+  if command_exists curl; then
+    curl -L --fail "${TRIVY_URL}" -o "${trivy_tmp}/trivy.tar.gz" || {
+      echo "Failed to download Trivy from ${TRIVY_URL}" >&2
+      exit 1
+    }
+  else
+    wget --tries=3 --timeout=30 -O "${trivy_tmp}/trivy.tar.gz" "${TRIVY_URL}" || {
+      echo "Failed to download Trivy from ${TRIVY_URL}" >&2
+      exit 1
+    }
+  fi
+  
+  tar -xzf "${trivy_tmp}/trivy.tar.gz" -C "${trivy_tmp}" || {
+    echo "Failed to extract Trivy archive" >&2
+    exit 1
+  }
+  
+  if [ ! -f "${trivy_tmp}/trivy" ]; then
+    echo "Trivy binary not found in archive. Archive may be corrupted or structure changed." >&2
+    exit 1
+  fi
+  
+  $SUDO_CMD mv "${trivy_tmp}/trivy" /usr/local/bin/trivy
+  $SUDO_CMD chmod +x /usr/local/bin/trivy
+  
+  cleanup_trivy
+  trap - EXIT
+  
+  echo "[post] Trivy installed successfully. Run 'trivy --version' to verify."
 fi
 
 echo "Cluster initialization complete."
