@@ -1,0 +1,65 @@
+# Termux temporary files
+/tmp/*
+*.tmp
+*.swp
+*.swo
+*~
+
+# Build artifacts
+*.o
+*.so
+*.a
+*.dylib
+*.dll
+*.exe
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+
+# Log files
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+*.key
+*.pem
+
+# Cache directories
+.cache/
+.npm/
+.pip/
+
+# Test directories
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Termux specific
+storage/
+swapfile
