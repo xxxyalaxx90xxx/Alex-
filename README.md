@@ -378,4 +378,35 @@ kube-system    kube-proxy-zs75b                                                 
 kube-system    kube-scheduler-ip-172-26-10-67.ap-northeast-1.compute.internal            1/1     Running   0             139m
 ```
 
+## 🤖 GitHub MCP Server Integration
+
+This repository also includes documentation for setting up and using the GitHub MCP (Model Context Protocol) Server, which enables AI-powered tools to interact with GitHub repositories, issues, pull requests, and workflows.
+
+**See [GITHUB_MCP_SERVER.md](./GITHUB_MCP_SERVER.md) for complete installation and configuration instructions.**
+
+### Quick Start with GitHub MCP Server
+
+The GitHub MCP Server allows you to:
+- Interact with GitHub repositories through AI tools
+- Manage issues and pull requests via AI assistants
+- Execute GitHub Actions workflows programmatically
+- Search code and analyze repositories
+
+Supports:
+- ✅ GitHub.com
+- ✅ GitHub Enterprise Server
+- ✅ GitHub Enterprise Cloud with data residency (ghe.com)
+
+### Compatible IDEs
+
+- VS Code / VS Code Insiders (with one-click install)
+- JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, etc.)
+- Visual Studio
+- Eclipse
+- Any IDE supporting MCP
+
+For detailed setup instructions, troubleshooting, and security best practices, refer to [GITHUB_MCP_SERVER.md](./GITHUB_MCP_SERVER.md).
+
+---
+
 Deepseek
