@@ -149,7 +149,8 @@ cleanup_common() {
   
   # Remove CNI network interfaces
   log "INFO" "Removing CNI network interfaces..."
-  for iface in $(ip link show | grep -oP 'cni[0-9]+|flannel\.[0-9]+|veth[a-z0-9]+' || true); do
+  # Match common CNI interface patterns: cni, flannel, weave, calico, cilium, vxlan, veth
+  for iface in $(ip link show | grep -oP 'cni[0-9]+|flannel\.[0-9]+|weave[a-z0-9-]+|cali[a-z0-9]+|lxc[a-z0-9]+|vxlan\.[0-9]+|veth[a-z0-9]+|tunl[0-9]+' || true); do
     $SUDO_CMD ip link delete "${iface}" 2>/dev/null || true
   done
   
