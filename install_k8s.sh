@@ -214,8 +214,9 @@ if [ "${INSTALL_TRIVY}" = "true" ]; then
   
   $SUDO_CMD mv "${trivy_tmp}/trivy" /usr/local/bin/trivy
   $SUDO_CMD chmod +x /usr/local/bin/trivy
-  trap - EXIT
+  
   cleanup_trivy
+  trap - EXIT
   
   echo "[post] Trivy installed successfully. Run 'trivy --version' to verify."
 fi

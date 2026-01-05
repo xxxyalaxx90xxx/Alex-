@@ -108,8 +108,8 @@ trivy k8s --report summary namespace/kube-system
 # Scan container images in the cluster
 trivy image IMAGE_NAME
 
-# Scan all images in a namespace
-kubectl get pods -n NAMESPACE -o jsonpath='{.items[*].spec.containers[*].image}' | xargs -n1 trivy image
+# Scan all images in a namespace (deduplicated)
+kubectl get pods -n NAMESPACE -o jsonpath='{.items[*].spec.containers[*].image}' | tr ' ' '\n' | sort -u | xargs -r -n1 trivy image
 
 # Generate a detailed report
 trivy k8s --report all cluster --format json --output trivy-report.json
