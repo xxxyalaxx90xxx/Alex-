@@ -235,8 +235,8 @@ install_dev_tools() {
     
     # Python packages
     print_success "Installing Python packages..."
-    pip install --upgrade pip
-    pip install jupyter numpy pandas matplotlib seaborn scikit-learn
+    pip3 install --upgrade pip
+    pip3 install jupyter numpy pandas matplotlib seaborn scikit-learn
     
     # Android tools
     print_success "Installing Android tools..."
@@ -274,10 +274,22 @@ install_networking() {
         
         cat > "$HOME/bin/tor-start" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
-tor &
-echo "Tor started on 127.0.0.1:9050"
+if pgrep -x "tor" > /dev/null; then
+    echo "Tor is already running"
+else
+    tor &
+    sleep 2
+    echo "Tor started on 127.0.0.1:9050"
+fi
 EOF
         chmod +x "$HOME/bin/tor-start"
+        
+        cat > "$HOME/bin/tor-stop" << 'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+pkill -x tor
+echo "Tor stopped"
+EOF
+        chmod +x "$HOME/bin/tor-stop"
     fi
     
     print_success "Networking tools installed"

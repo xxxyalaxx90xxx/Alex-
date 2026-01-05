@@ -184,6 +184,17 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+# Validate config file
+if [ ! -f "$1" ]; then
+    echo "Error: Config file '$1' not found"
+    exit 1
+fi
+
+if [[ "$1" != *.ovpn ]]; then
+    echo "Error: Config file must have .ovpn extension"
+    exit 1
+fi
+
 sudo openvpn --config "$1" --daemon
 echo "VPN connecting..."
 EOF

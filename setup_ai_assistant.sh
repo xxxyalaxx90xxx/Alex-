@@ -94,7 +94,9 @@ install_python_packages() {
     print_header "Installing Python AI Packages"
     
     print_info "Installing transformers and dependencies..."
-    pip3 install --user transformers torch torchvision accelerate
+    pip3 install --user transformers accelerate
+    # Install CPU-only PyTorch to save space
+    pip3 install --user torch torchvision --index-url https://download.pytorch.org/whl/cpu
     
     print_info "Installing LangChain for AI workflows..."
     pip3 install --user langchain langchain-community
@@ -122,15 +124,24 @@ install_gpt4all() {
     
     pip3 install --user gpt4all
     
-    # Download a small model
+    # Download a small model with error handling
     print_info "Downloading GPT4All model (this may take a while)..."
     python3 -c "
 from gpt4all import GPT4All
 import os
-os.makedirs('${MODELS_DIR}', exist_ok=True)
-model = GPT4All('orca-mini-3b-gguf2-q4_0.gguf', model_path='${MODELS_DIR}')
-print('Model downloaded successfully')
+try:
+    os.makedirs('${MODELS_DIR}', exist_ok=True)
+    print('Downloading model...')
+    model = GPT4All('orca-mini-3b-gguf2-q4_0.gguf', model_path='${MODELS_DIR}')
+    print('Model downloaded successfully')
+except Exception as e:
+    print(f'Error downloading model: {e}')
+    exit(1)
 "
+    if [ $? -ne 0 ]; then
+        print_error "Failed to download AI model"
+        return 1
+    fi
     
     print_success "GPT4All installed"
 }
@@ -149,8 +160,16 @@ install_ollama() {
         return
     fi
     
-    # Install Ollama
-    curl -fsSL https://ollama.ai/install.sh | sh
+    # Install Ollama with verification
+    local install_script="/tmp/ollama_install.sh"
+    curl -fsSL https://ollama.ai/install.sh -o "$install_script"
+    if [ -f "$install_script" ] && [ -s "$install_script" ]; then
+        sh "$install_script"
+        rm "$install_script"
+    else
+        print_error "Failed to download Ollama installer"
+        return 1
+    fi
     
     # Pull a small model
     print_info "Pulling Ollama model..."
