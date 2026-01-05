@@ -78,6 +78,13 @@ INNER_SCRIPT
 
 echo "[5/7] Install k3s in proot Ubuntu environment"
 echo "Note: This may take several minutes..."
+
+# Setup cleanup trap
+cleanup_k3s_script() {
+  rm -f /tmp/k3s_install_inner.sh
+}
+trap cleanup_k3s_script EXIT
+
 # Copy script to proot environment
 proot-distro login ubuntu -- mkdir -p /tmp 2>/dev/null || true
 cat /tmp/k3s_install_inner.sh | proot-distro login ubuntu -- tee /tmp/k3s_install_inner.sh >/dev/null
@@ -86,12 +93,22 @@ if ! proot-distro login ubuntu -- /tmp/k3s_install_inner.sh; then
   echo "Warning: k3s installation in proot encountered issues." >&2
   echo "You may need to manually complete the setup." >&2
 fi
-rm -f /tmp/k3s_install_inner.sh
+
+# Cleanup
+trap - EXIT
+cleanup_k3s_script
 
 echo "[6/7] Install kubectl in Termux"
 if ! command_exists kubectl; then
   echo "Downloading kubectl..."
   KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+  
+  if [ -z "${KUBECTL_VERSION}" ]; then
+    echo "Error: Failed to retrieve kubectl version" >&2
+    exit 1
+  fi
+  
+  echo "Latest kubectl version: ${KUBECTL_VERSION}"
   
   # Detect architecture
   ARCH=$(uname -m)
