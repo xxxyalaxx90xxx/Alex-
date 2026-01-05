@@ -1,0 +1,111 @@
+# GitLab CI/CD Template for Kubernetes Installation and Validation
+# Copy this to .gitlab-ci.yml in your repository
+
+stages:
+  - install
+  - validate
+  - backup
+  - cleanup
+
+variables:
+  INSTALL_MODE: "lightweight"
+  AUTO_INSTALL: "1"
+  KUBECONFIG_FILE: "/etc/rancher/k3s/k3s.yaml"
+
+before_script:
+  - chmod +x *.sh
+
+install_k8s:
+  stage: install
+  script:
+    - echo "Installing Kubernetes (K3s for CI)"
+    - sudo -E ./install_k8s_optimized.sh
+    - sleep 30
+    - sudo kubectl --kubeconfig=${KUBECONFIG_FILE} get nodes
+  artifacts:
+    paths:
+      - "*.log"
+    expire_in: 1 week
+  tags:
+    - kubernetes
+
+validate_installation:
+  stage: validate
+  dependencies:
+    - install_k8s
+  script:
+    - echo "Running validation tests"
+    - sudo -E KUBECONFIG=${KUBECONFIG_FILE} ./validate_k8s.sh
+  artifacts:
+    reports:
+      junit: validation_report.xml
+    paths:
+      - validation_report.txt
+    expire_in: 1 week
+  tags:
+    - kubernetes
+
+analyze_cluster:
+  stage: validate
+  dependencies:
+    - install_k8s
+  script:
+    - echo "Running cluster analysis"
+    - sudo -E KUBECONFIG=${KUBECONFIG_FILE} ./analyze_k8s.sh
+  artifacts:
+    paths:
+      - k8s_analysis_report.txt
+    expire_in: 1 week
+  tags:
+    - kubernetes
+
+create_backup:
+  stage: backup
+  dependencies:
+    - install_k8s
+  script:
+    - echo "Creating cluster backup"
+    - sudo -E KUBECONFIG=${KUBECONFIG_FILE} ./backup_k8s.sh backup
+  artifacts:
+    paths:
+      - ~/k8s_backups/*.tar.gz
+    expire_in: 1 month
+  tags:
+    - kubernetes
+
+cleanup_k8s:
+  stage: cleanup
+  when: always
+  script:
+    - echo "Cleaning up Kubernetes installation"
+    - sudo ./uninstall_k8s.sh --force || true
+  tags:
+    - kubernetes
+
+# Multi-OS testing
+.test_template: &test_definition
+  stage: install
+  script:
+    - chmod +x install_k8s_optimized.sh validate_k8s.sh uninstall_k8s.sh
+    - sudo -E ./install_k8s_optimized.sh
+    - sleep 30
+    - sudo -E KUBECONFIG=${KUBECONFIG_FILE} ./validate_k8s.sh
+    - sudo ./uninstall_k8s.sh --force || true
+
+test_ubuntu_20_04:
+  <<: *test_definition
+  image: ubuntu:20.04
+  tags:
+    - docker
+
+test_ubuntu_22_04:
+  <<: *test_definition
+  image: ubuntu:22.04
+  tags:
+    - docker
+
+test_debian_11:
+  <<: *test_definition
+  image: debian:11
+  tags:
+    - docker

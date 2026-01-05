@@ -1,0 +1,101 @@
+name: Kubernetes Installation and Validation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  install-and-validate-k8s:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up environment
+      run: |
+        echo "Setting up Kubernetes installation environment"
+        chmod +x *.sh
+    
+    - name: Install Kubernetes (K3s for CI)
+      run: |
+        # Use lightweight K3s for CI environment
+        export INSTALL_MODE=lightweight
+        export AUTO_INSTALL=1
+        sudo -E ./install_k8s_optimized.sh
+      env:
+        INSTALL_MODE: lightweight
+        AUTO_INSTALL: 1
+    
+    - name: Wait for cluster to be ready
+      run: |
+        echo "Waiting for K3s cluster to be ready..."
+        sleep 30
+        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+        sudo kubectl wait --for=condition=ready node --all --timeout=120s
+    
+    - name: Run validation tests
+      run: |
+        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+        sudo -E ./validate_k8s.sh
+    
+    - name: Run cluster analysis
+      run: |
+        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+        sudo -E ./analyze_k8s.sh
+    
+    - name: Create backup
+      run: |
+        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+        sudo -E ./backup_k8s.sh backup
+    
+    - name: Upload backup artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: k8s-backup
+        path: ~/k8s_backups/*.tar.gz
+        retention-days: 7
+    
+    - name: Upload analysis report
+      uses: actions/upload-artifact@v3
+      with:
+        name: k8s-analysis
+        path: k8s_analysis_report.txt
+        retention-days: 7
+    
+    - name: Clean up
+      if: always()
+      run: |
+        sudo ./uninstall_k8s.sh --force || true
+
+  test-multiple-os:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Install K3s
+      run: |
+        chmod +x install_k8s_optimized.sh
+        export INSTALL_MODE=lightweight AUTO_INSTALL=1
+        sudo -E ./install_k8s_optimized.sh
+    
+    - name: Validate installation
+      run: |
+        chmod +x validate_k8s.sh
+        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+        sudo -E ./validate_k8s.sh
+    
+    - name: Clean up
+      if: always()
+      run: |
+        chmod +x uninstall_k8s.sh
+        sudo ./uninstall_k8s.sh --force || true

@@ -20,10 +20,16 @@
 | **install_k8s_complete.sh** | Production installation | Preflight checks, logging, 8+ OS support, validation |
 | **install_k8s_optimized.sh** | Mobile/ARM installation | Auto-detection, K3s support, Realme C63 optimized |
 | **install_k8s.sh** | Legacy installation | Quick CentOS/RHEL setup |
-| **validate_k8s.sh** | ⭐ NEW: Testing & validation | 12 comprehensive tests, health checks |
-| **backup_k8s.sh** | ⭐ NEW: Backup & restore | Full cluster backup, resource export |
+| **upgrade_k8s.sh** | ⭐ NEW: Version upgrades | K3s/kubeadm upgrade with backup |
+| **validate_k8s.sh** | Testing & validation | 12 comprehensive tests, health checks |
+| **backup_k8s.sh** | Backup & restore | Full cluster backup, resource export |
 | **analyze_k8s.sh** | Cluster analysis | 11 analysis sections, health assessment |
+| **setup_monitoring.sh** | ⭐ NEW: Monitoring stack | Prometheus, Grafana, Metrics Server |
 | **uninstall_k8s.sh** | Clean removal | Complete cleanup, CNI removal |
+
+### 🔧 CI/CD Templates
+- **`.github/workflows/k8s-ci.yml`** ⭐ NEW - GitHub Actions workflow
+- **`gitlab-ci-template.yml`** ⭐ NEW - GitLab CI/CD template
 
 ## 🚀 Complete Installation System (NEWEST - v2.0)
 
@@ -384,6 +390,144 @@ BACKUP_DIR=/opt/backups ./backup_k8s.sh backup
 - All namespaces and resources
 - Secrets (for disaster recovery)
 - Compressed tarball for easy transfer
+
+---
+
+## 🔄 Upgrade & Updates (NEW)
+
+Upgrade your Kubernetes or K3s installation to newer versions:
+
+```bash
+chmod +x upgrade_k8s.sh
+
+# Upgrade K3s to latest
+sudo ./upgrade_k8s.sh
+
+# Upgrade K3s to specific version
+sudo ./upgrade_k8s.sh v1.28.5+k3s1
+
+# Upgrade kubeadm to specific version
+sudo ./upgrade_k8s.sh 1.29.0
+
+# Skip backup before upgrade (not recommended)
+BACKUP_BEFORE_UPGRADE=false sudo ./upgrade_k8s.sh
+```
+
+### Features:
+- Automatic backup before upgrade
+- Supports both K3s and kubeadm
+- Version-specific upgrades
+- Cluster validation after upgrade
+- Rollback capability (via backup)
+
+---
+
+## 📊 Monitoring Setup (NEW)
+
+Set up a complete monitoring stack with one command:
+
+```bash
+chmod +x setup_monitoring.sh
+./setup_monitoring.sh
+```
+
+### Installs:
+- **Metrics Server** - Resource metrics (CPU, memory) for `kubectl top`
+- **Prometheus** - Metrics collection and time-series database
+- **Grafana** - Visualization and dashboards
+
+### Access:
+```bash
+# Get node IP
+kubectl get nodes -o wide
+
+# Access Prometheus: http://<node-ip>:<prometheus-port>
+# Access Grafana: http://<node-ip>:<grafana-port>
+# Default Grafana credentials: admin/admin
+```
+
+### Customization:
+```bash
+# Skip specific components
+INSTALL_METRICS_SERVER=false ./setup_monitoring.sh
+INSTALL_PROMETHEUS=false ./setup_monitoring.sh
+INSTALL_GRAFANA=false ./setup_monitoring.sh
+
+# Custom namespace
+MONITORING_NAMESPACE=observability ./setup_monitoring.sh
+```
+
+---
+
+## 🔄 CI/CD Integration (NEW)
+
+### GitHub Actions
+
+Use the provided workflow template:
+
+```yaml
+# .github/workflows/k8s-ci.yml is included
+```
+
+The workflow:
+- Installs K3s in CI environment
+- Runs validation tests
+- Performs cluster analysis
+- Creates backup
+- Tests on multiple Ubuntu versions
+- Uploads artifacts
+
+### GitLab CI/CD
+
+Copy the provided template:
+
+```bash
+cp gitlab-ci-template.yml .gitlab-ci.yml
+```
+
+Features:
+- Multi-stage pipeline (install, validate, backup, cleanup)
+- Multi-OS testing (Ubuntu 20.04, 22.04, Debian 11)
+- Artifact preservation
+- Automatic cleanup
+
+### Jenkins
+
+Example Jenkinsfile:
+
+```groovy
+pipeline {
+    agent any
+    
+    stages {
+        stage('Install K8s') {
+            steps {
+                sh 'chmod +x install_k8s_optimized.sh'
+                sh 'sudo AUTO_INSTALL=1 INSTALL_MODE=lightweight ./install_k8s_optimized.sh'
+            }
+        }
+        
+        stage('Validate') {
+            steps {
+                sh 'sudo ./validate_k8s.sh'
+            }
+        }
+        
+        stage('Backup') {
+            steps {
+                sh 'sudo ./backup_k8s.sh backup'
+                archiveArtifacts artifacts: '**/*.tar.gz', fingerprint: true
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh 'sudo ./uninstall_k8s.sh --force || true'
+        }
+    }
+}
+```
 
 ---
 
