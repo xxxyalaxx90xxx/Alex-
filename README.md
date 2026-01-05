@@ -6,7 +6,7 @@ Run the provided script to install kubeadm/kubelet/kubectl, enable containerd CR
 
 ```
 chmod +x install_k8s.sh
-# optionally set ADVERTISE_ADDRESS, POD_CIDR, HUGEPAGES_2MI, KUBECONFIG_FILE
+# optionally set ADVERTISE_ADDRESS, POD_CIDR, HUGEPAGES_2MI, KUBECONFIG_FILE, INSTALL_TRIVY
 sudo ./install_k8s.sh
 ```
 
@@ -15,6 +15,7 @@ Defaults:
 - `POD_CIDR`: `10.244.0.0/16`
 - `HUGEPAGES_2MI`: not configured unless set
 - `KUBECONFIG_FILE`: `$HOME/.kube/config`
+- `INSTALL_TRIVY`: `false` (set to `true` to install Trivy security scanner)
 
 ## Install kubelet
 
@@ -92,5 +93,28 @@ kube-system    kube-controller-manager-ip-172-26-10-67.ap-northeast-1.compute.in
 kube-system    kube-proxy-zs75b                                                          1/1     Running   0             139m
 kube-system    kube-scheduler-ip-172-26-10-67.ap-northeast-1.compute.internal            1/1     Running   0             139m
 ```
+
+## Security Scanning with Trivy
+
+If you installed Trivy (by setting `INSTALL_TRIVY=true`), you can scan your Kubernetes cluster for security vulnerabilities:
+
+```
+# Scan the Kubernetes cluster for misconfigurations
+trivy k8s --report summary cluster
+
+# Scan a specific namespace
+trivy k8s --report summary namespace/kube-system
+
+# Scan container images in the cluster
+trivy image <image-name>
+
+# Scan all images in a namespace
+kubectl get pods -n <namespace> -o jsonpath='{.items[*].spec.containers[*].image}' | xargs -n1 trivy image
+
+# Generate a detailed report
+trivy k8s --report all cluster --format json --output trivy-report.json
+```
+
+For more information on Trivy usage, visit: https://aquasecurity.github.io/trivy/
 
 Deepseek
