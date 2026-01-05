@@ -25,8 +25,12 @@
 | **backup_k8s.sh** | Backup & restore | Full cluster backup, resource export |
 | **analyze_k8s.sh** | Cluster analysis | 11 analysis sections, health assessment |
 | **setup_monitoring.sh** | Monitoring stack | Prometheus, Grafana, Metrics Server |
-| **optimize_performance.sh** | ⭐ NEW: Performance tuning | Device-specific optimizations |
-| **troubleshoot_k8s.sh** | ⭐ NEW: Auto troubleshoot | Detect & fix common issues |
+| **optimize_performance.sh** | ⭐ Performance tuning | Device-specific optimizations |
+| **troubleshoot_k8s.sh** | ⭐ Auto troubleshoot | Detect & fix common issues |
+| **setup_ai_assistant.sh** | ⭐ AI Integration | Local AI models, intelligent analysis |
+| **termux_complete_install.sh** | ⭐ Termux automation | One-command Realme C63 setup |
+| **setup_privacy_tools.sh** | ⭐ Privacy tools | Tor Browser, VPN, DNS encryption |
+| **setup_github_mcp.sh** | ⭐ NEW: GitHub MCP | AI-powered GitHub operations |
 | **uninstall_k8s.sh** | Clean removal | Complete cleanup, CNI removal |
 
 ### 🔧 CI/CD Templates
@@ -896,6 +900,63 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 | Logging | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | Multi-OS | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
 | Mobile Support | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ |
+
+---
+
+## 🔗 GitHub MCP Integration (NEW)
+
+**AI-powered GitHub operations with the Model Context Protocol server!**
+
+The GitHub MCP server integration provides intelligent GitHub operations through AI, enabling natural language queries, automated analysis, and AI-powered code reviews.
+
+```bash
+chmod +x setup_github_mcp.sh
+./setup_github_mcp.sh
+```
+
+### Key Features:
+- ✅ **AI-Powered Operations** - Natural language GitHub queries
+- ✅ **Repository Analysis** - AI analyzes repos and provides insights
+- ✅ **Intelligent PR Reviews** - AI-powered code review suggestions
+- ✅ **Issue Management** - AI suggests solutions for issues
+- ✅ **Code Search** - Search across all repositories with AI context
+- ✅ **Commit Messages** - AI generates detailed commit messages
+- ✅ **Local AI Models** - Works with GPT4All, Ollama, LLaMA
+
+### Usage Examples:
+
+```bash
+# List repositories
+ai-github repos
+
+# Search code across repositories
+ai-github search "kubernetes cluster"
+
+# Analyze repository with AI
+ai-github analyze owner/repo
+
+# Get AI suggestions for an issue
+ai-github suggest 123
+
+# AI review a pull request
+ai-github review 456
+
+# Generate commit message with AI
+ai-github commit "Add new feature"
+```
+
+### Integration:
+- Works seamlessly with `ai-assistant` command
+- Integrated with `analyze_k8s.sh` for repo analysis
+- Compatible with all existing tools
+- Supports Termux, WSL, and native Linux
+
+### Configuration:
+1. Create GitHub Personal Access Token at: https://github.com/settings/tokens
+2. Set environment variable: `export GITHUB_TOKEN='your_token_here'`
+3. Run setup script: `./setup_github_mcp.sh`
+
+For detailed documentation, see the GitHub MCP Server repository: https://github.com/github/github-mcp-server
 
 ---
 
