@@ -84,8 +84,8 @@ $SUDO_CMD mkdir -p /etc/containerd
 if [ ! -f /etc/containerd/config.toml ]; then
   $SUDO_CMD containerd config default | $SUDO_CMD tee /etc/containerd/config.toml >/dev/null
 fi
-if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[.*["\x27]cri["\x27].*\]' /etc/containerd/config.toml; then
-  $SUDO_CMD sed -i -E 's/^([[:space:]]*)disabled_plugins[[:space:]]*=[[:space:]]*\[.*["\x27]cri["\x27].*\]/\1# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
+if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[.*['\''"]cri['\''"].*\]' /etc/containerd/config.toml; then
+  $SUDO_CMD sed -i -E 's/^([[:space:]]*)disabled_plugins[[:space:]]*=[[:space:]]*\[.*['\''"]cri['\''"].*\]/\1# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
 fi
 $SUDO_CMD systemctl enable --now containerd
 $SUDO_CMD systemctl restart containerd
