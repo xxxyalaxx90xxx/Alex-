@@ -93,4 +93,41 @@ kube-system    kube-proxy-zs75b                                                 
 kube-system    kube-scheduler-ip-172-26-10-67.ap-northeast-1.compute.internal            1/1     Running   0             139m
 ```
 
+## Analyze Cluster Data (Datenanalyse)
+
+After setting up the Kubernetes cluster, you can run a comprehensive data analysis to check the cluster health and generate a detailed report:
+
+```
+chmod +x analyze_k8s.sh
+./analyze_k8s.sh
+```
+
+The analysis script will:
+- Collect cluster version and configuration information
+- Analyze node status and resource allocation
+- Review all pods across namespaces and their health
+- Check network configuration (CNI plugins)
+- Examine storage resources (PV, PVC, StorageClasses)
+- Review recent events and warnings
+- Assess component health
+- Generate a comprehensive summary report
+
+By default, the report is saved to `k8s_analysis_report.txt`. You can customize the output file:
+
+```
+OUTPUT_FILE=my_report.txt ./analyze_k8s.sh
+```
+
+If your kubeconfig is in a non-standard location:
+
+```
+KUBECONFIG_FILE=/path/to/kubeconfig ./analyze_k8s.sh
+```
+
+The analysis provides:
+- Summary statistics (nodes, pods, namespaces)
+- Overall cluster health assessment
+- Detailed information for troubleshooting
+- Resource utilization metrics (if metrics-server is installed)
+
 Deepseek
