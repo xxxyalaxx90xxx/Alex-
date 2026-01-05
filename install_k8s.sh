@@ -12,18 +12,49 @@ set -euo pipefail
 #   MAX_RETRIES:        Maximum number of retries for network operations (default: 3)
 #   RETRY_DELAY:        Delay between retries in seconds (default: 5)
 #   STARTUP_WAIT_SECONDS: Wait time for cluster components to start (default: 5)
+#   DRY_RUN:            If set to "true", only show what would be done (default: false)
+#   SKIP_CHECKS:        Skip prerequisite checks if set to "true" (default: false)
+#   ENABLE_COLORS:      Enable colored output (default: auto-detect TTY)
+
+# Color support detection and setup
+if [[ "${ENABLE_COLORS:-auto}" == "auto" ]]; then
+  if [[ -t 1 ]]; then
+    ENABLE_COLORS="true"
+  else
+    ENABLE_COLORS="false"
+  fi
+fi
+
+# Color codes
+if [[ "${ENABLE_COLORS}" == "true" ]]; then
+  COLOR_RESET='\033[0m'
+  COLOR_INFO='\033[0;36m'     # Cyan
+  COLOR_SUCCESS='\033[0;32m'  # Green
+  COLOR_ERROR='\033[0;31m'    # Red
+  COLOR_WARN='\033[0;33m'     # Yellow
+else
+  COLOR_RESET=''
+  COLOR_INFO=''
+  COLOR_SUCCESS=''
+  COLOR_ERROR=''
+  COLOR_WARN=''
+fi
 
 # Logging functions
 log_info() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $*"
+  echo -e "${COLOR_INFO}[$(date '+%Y-%m-%d %H:%M:%S')] [INFO]${COLOR_RESET} $*"
 }
 
 log_error() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR] $*" >&2
+  echo -e "${COLOR_ERROR}[$(date '+%Y-%m-%d %H:%M:%S')] [ERROR]${COLOR_RESET} $*" >&2
 }
 
 log_success() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [SUCCESS] $*"
+  echo -e "${COLOR_SUCCESS}[$(date '+%Y-%m-%d %H:%M:%S')] [SUCCESS]${COLOR_RESET} $*"
+}
+
+log_warn() {
+  echo -e "${COLOR_WARN}[$(date '+%Y-%m-%d %H:%M:%S')] [WARN]${COLOR_RESET} $*"
 }
 
 # Retry function for network operations
@@ -94,8 +125,70 @@ if [ "${EUID:-$(id -u)}" -eq 0 ]; then
   SUDO_CMD=""
 fi
 
+# Dry-run mode
+DRY_RUN=${DRY_RUN:-false}
+if [[ "${DRY_RUN}" == "true" ]]; then
+  log_warn "DRY RUN MODE - No changes will be made"
+  SUDO_CMD="echo [DRY-RUN] sudo"
+fi
+
 command_exists() {
   command -v "$1" >/dev/null 2>&1
+}
+
+# Prerequisite check function
+check_prerequisites() {
+  log_info "Checking prerequisites..."
+  local failed=0
+  
+  # Check if running as root or with sudo
+  if [[ "${DRY_RUN}" != "true" ]]; then
+    if [[ "${EUID:-$(id -u)}" -ne 0 ]] && ! command_exists sudo; then
+      log_error "This script must be run as root or with sudo available"
+      failed=1
+    fi
+  fi
+  
+  # Check minimum memory requirement (2GB recommended)
+  local min_memory_kb=$((2 * 1024 * 1024))
+  local total_memory_kb=$(awk '/MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo "0")
+  if [ "$total_memory_kb" -lt "$min_memory_kb" ]; then
+    log_warn "System has less than 2GB RAM ($(( total_memory_kb / 1024 / 1024 ))GB). Kubernetes may not run properly."
+  fi
+  
+  # Check disk space (minimum 10GB free in /var)
+  if command_exists df; then
+    local var_space_kb=$(df /var 2>/dev/null | awk 'NR==2 {print $4}')
+    local min_disk_kb=$((10 * 1024 * 1024))
+    if [ -n "$var_space_kb" ] && [ "$var_space_kb" -lt "$min_disk_kb" ]; then
+      log_warn "Less than 10GB free space in /var ($(( var_space_kb / 1024 / 1024 ))GB available)"
+    fi
+  fi
+  
+  # Check network connectivity
+  if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
+    log_warn "No internet connectivity detected. Installation may fail."
+  fi
+  
+  # Check if ports are available
+  for port in 6443 2379 2380 10250 10251 10252; do
+    if command_exists ss && ss -tuln | grep -q ":${port} "; then
+      log_warn "Port ${port} is already in use. Kubernetes may fail to start."
+    fi
+  done
+  
+  # Check if firewalld or iptables might interfere
+  if systemctl is-active --quiet firewalld 2>/dev/null; then
+    log_warn "firewalld is active. This may interfere with Kubernetes networking."
+  fi
+  
+  if [ $failed -eq 1 ]; then
+    log_error "Prerequisite checks failed"
+    return 1
+  fi
+  
+  log_success "Prerequisite checks passed"
+  return 0
 }
 
 get_primary_ip() {
@@ -124,8 +217,29 @@ PY
   fi
 }
 
+# Backup existing configuration file
+backup_file() {
+  local file="$1"
+  if [ -f "$file" ]; then
+    local backup="${file}.backup.$(date +%Y%m%d_%H%M%S)"
+    log_info "Backing up ${file} to ${backup}"
+    if [[ "${DRY_RUN}" != "true" ]]; then
+      $SUDO_CMD cp "$file" "$backup"
+    fi
+  fi
+}
+
 # Auto-detect and validate configuration
 log_info "Detecting system configuration..."
+
+# Run prerequisite checks unless skipped
+SKIP_CHECKS=${SKIP_CHECKS:-false}
+if [[ "${SKIP_CHECKS}" != "true" ]]; then
+  if ! check_prerequisites; then
+    log_error "Prerequisite checks failed. Set SKIP_CHECKS=true to bypass."
+    exit 1
+  fi
+fi
 
 # Detect available memory for better defaults
 TOTAL_MEMORY_KB=$(awk '/MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo "0")
@@ -172,6 +286,9 @@ EOF
 log_success "Kubernetes repository configured"
 
 log_info "[2/6] Set SELinux to permissive mode"
+if [ -f /etc/selinux/config ]; then
+  backup_file /etc/selinux/config
+fi
 $SUDO_CMD setenforce 0 2>/dev/null || true
 $SUDO_CMD sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config || true
 log_success "SELinux set to permissive mode"
@@ -196,6 +313,8 @@ $SUDO_CMD mkdir -p /etc/containerd
 if [ ! -f /etc/containerd/config.toml ]; then
   log_info "Generating default containerd configuration..."
   $SUDO_CMD containerd config default | $SUDO_CMD tee /etc/containerd/config.toml >/dev/null
+else
+  backup_file /etc/containerd/config.toml
 fi
 # Pattern to match: disabled_plugins = ["cri"] or disabled_plugins = ['cri']
 # This regex matches the line where CRI is explicitly disabled
@@ -333,33 +452,87 @@ log_info "Verifying cluster health..."
 STARTUP_WAIT_SECONDS=${STARTUP_WAIT_SECONDS:-5}
 sleep "$STARTUP_WAIT_SECONDS"
 
+# Comprehensive cluster health check
+run_health_checks() {
+  local check_failed=0
+  
+  log_info "Running comprehensive health checks..."
+  
+  # Check node status
+  if command_exists kubectl; then
+    log_info "Node status:"
+    node_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get nodes -o wide 2>&1)
+    if [ $? -eq 0 ]; then
+      echo "$node_output"
+      
+      # Check if node is Ready
+      if echo "$node_output" | grep -q " Ready "; then
+        log_success "Node is Ready"
+      else
+        log_warn "Node is not in Ready state yet"
+        check_failed=1
+      fi
+    else
+      log_error "Unable to get node status - cluster may need more time to initialize"
+      echo "$node_output"
+      check_failed=1
+    fi
+    
+    log_info ""
+    log_info "System pods status:"
+    pods_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces 2>&1)
+    if [ $? -eq 0 ]; then
+      echo "$pods_output"
+      
+      # Count pending/failed pods
+      pending_count=$(echo "$pods_output" | grep -c "Pending" || true)
+      failed_count=$(echo "$pods_output" | grep -c "Error\|CrashLoopBackOff" || true)
+      
+      if [ "$pending_count" -gt 0 ]; then
+        log_warn "${pending_count} pod(s) are in Pending state"
+      fi
+      if [ "$failed_count" -gt 0 ]; then
+        log_warn "${failed_count} pod(s) are in Failed/Error state"
+        check_failed=1
+      fi
+    else
+      log_error "Unable to get pods status - cluster may need more time to initialize"
+      echo "$pods_output"
+      check_failed=1
+    fi
+    
+    # Check component status
+    log_info ""
+    log_info "Kubernetes component status:"
+    component_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get componentstatuses 2>&1)
+    if [ $? -eq 0 ]; then
+      echo "$component_output"
+    else
+      log_warn "Unable to get component status (this is normal for newer Kubernetes versions)"
+    fi
+    
+    log_info ""
+    log_info "To use kubectl, run: export KUBECONFIG=${KUBECONFIG_FILE}"
+  else
+    log_error "kubectl command not found in PATH"
+    check_failed=1
+  fi
+  
+  return $check_failed
+}
+
 # Check node status
-if command_exists kubectl; then
-  log_info "Node status:"
-  node_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get nodes -o wide 2>&1)
-  if [ $? -eq 0 ]; then
-    echo "$node_output"
-  else
-    log_error "Unable to get node status - cluster may need more time to initialize"
-    echo "$node_output"
-  fi
-  
-  log_info ""
-  log_info "System pods status:"
-  pods_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces 2>&1)
-  if [ $? -eq 0 ]; then
-    echo "$pods_output"
-  else
-    log_error "Unable to get pods status - cluster may need more time to initialize"
-    echo "$pods_output"
-  fi
-  
-  log_info ""
-  log_info "To use kubectl, run: export KUBECONFIG=${KUBECONFIG_FILE}"
-else
-  log_error "kubectl command not found in PATH"
-fi
+run_health_checks
 
 log_info ""
 log_success "Installation completed successfully!"
-log_info "You may need to wait a few minutes for all pods to reach Running state."
+log_info ""
+log_info "Next steps:"
+log_info "  1. Export kubeconfig: export KUBECONFIG=${KUBECONFIG_FILE}"
+log_info "  2. Wait for all pods to be Running: kubectl get pods --all-namespaces -w"
+log_info "  3. Deploy your applications"
+log_info ""
+log_info "Troubleshooting:"
+log_info "  - Check logs: journalctl -u kubelet -f"
+log_info "  - Check events: kubectl get events --all-namespaces"
+log_info "  - Check pod logs: kubectl logs -n <namespace> <pod-name>"
