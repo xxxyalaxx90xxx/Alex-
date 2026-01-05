@@ -633,10 +633,162 @@ Issues fixed: 1
 
 ---
 
+## 📱 Realme C63 & Mobile Devices Setup
+
+**Complete setup for Realme C63 (RMX3939) and mobile devices with Termux support!**
+
+```bash
+# Download setup script
+wget https://raw.githubusercontent.com/xxxyalaxx90xxx/Alex-/main/setup_realme_c63.sh
+chmod +x setup_realme_c63.sh
+
+# Run complete setup
+./setup_realme_c63.sh
+
+# With K3s installation
+./setup_realme_c63.sh --with-k3s
+
+# Custom Linux distribution
+./setup_realme_c63.sh --distro debian
+```
+
+### Features:
+- ✅ **Termux environment optimization** - Package updates, storage access
+- ✅ **Proot Linux distribution** - Full Linux in Termux (Ubuntu, Debian)
+- ✅ **Database installations** - PostgreSQL, MySQL/MariaDB, Redis
+- ✅ **Development tools** - Python, Node.js, Go, Rust
+- ✅ **Realme C63 optimizations** - Device-specific performance tuning
+- ✅ **K3s integration** - Lightweight Kubernetes for mobile
+
+See [REALME_C63_GUIDE.md](REALME_C63_GUIDE.md) for complete instructions.
+
+---
+
+## 🪟 Windows WSL Setup
+
+**Optimized Kubernetes setup for Windows Subsystem for Linux (WSL2)!**
+
+```bash
+# Inside WSL2, download setup script
+wget https://raw.githubusercontent.com/xxxyalaxx90xxx/Alex-/main/setup_windows_wsl.sh
+chmod +x setup_windows_wsl.sh
+
+# Run with sudo
+sudo ./setup_windows_wsl.sh
+
+# Then restart WSL (in PowerShell)
+wsl --shutdown
+```
+
+### Features:
+- ✅ **WSL2 optimization** - Memory, CPU, network configuration
+- ✅ **Systemd support** - Required for K3s
+- ✅ **K3s installation** - Lightweight Kubernetes for WSL
+- ✅ **Windows integration** - Access K3s from Windows
+- ✅ **Helper scripts** - start-k3s, stop-k3s, restart-k3s
+- ✅ **Kubeconfig sharing** - Use kubectl from Windows
+
+---
+
+## 💻 Development Environment Setup
+
+**Complete development environment with VS Code, Android SDK, AI/ML frameworks, and cybersecurity tools!**
+
+**Author:** Alexander Mathey (xyalaxxx90@gmail.com)  
+**Copyright:** Elektronikx-Center-Matte ® ™ By Alexander Mathey ©
+
+```bash
+# Download setup script
+wget https://raw.githubusercontent.com/xxxyalaxx90xxx/Alex-/main/setup_dev_environment.sh
+chmod +x setup_dev_environment.sh
+
+# Run complete setup
+sudo ./setup_dev_environment.sh
+
+# Or customize
+SKIP_DOCKER=true ./setup_dev_environment.sh
+```
+
+### Installed Components:
+
+#### IDEs & Editors
+- **VS Code** - Latest version with extensions for:
+  - Python, Java, C/C++, Go, Rust
+  - Docker, Kubernetes
+  - AI/ML (Jupyter, TensorFlow)
+  - Android development
+  - Security scanning
+  - Git integration
+
+#### Android Development
+- **Android SDK** - Command line tools, platform-tools
+- **Build Tools** - Latest version
+- **NDK** - Native development kit
+- **Gradle** - Build automation tool
+- **APK Building** - Complete toolchain
+
+#### AI/ML Frameworks
+- **TensorFlow** - Deep learning framework
+- **PyTorch** - Machine learning library
+- **Hugging Face** - Transformers, Diffusers
+- **Jupyter** - Interactive notebooks
+- **NumPy, Pandas** - Data science tools
+- **OpenCV** - Computer vision
+- **Scikit-learn** - Machine learning algorithms
+
+#### Programming Languages
+- **Python 3** - With pip and virtual env
+- **Node.js** - Latest LTS with npm
+- **Go** - Latest stable
+- **Rust** - With cargo
+- **Java** - OpenJDK 17
+
+#### Cybersecurity Tools
+- **Network Tools** - nmap, netcat, curl, wget
+- **Encryption** - OpenSSL, GPG
+- **Python Security** - scapy, cryptography, paramiko
+
+#### Containerization
+- **Docker** - Container platform
+- **Docker Compose** - Multi-container apps
+
+### Project Templates:
+
+```bash
+# Create Android app
+~/dev-templates/create-android-app.sh MyApp com.example.myapp
+
+# Create AI project
+~/dev-templates/create-ai-project.sh my-ai-project
+
+# Build APK
+cd MyApp
+gradle assembleDebug
+```
+
+### Quick Start Development:
+
+```bash
+# Start development environment
+~/start-dev-environment.sh
+
+# Launch VS Code
+code
+
+# Create and run AI model
+python3 my-ai-project/train_model.py
+
+# Build Android APK
+cd MyApp && gradle assembleRelease
+```
+
+---
+
 ## 📚 Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
-- **[ADVANCED_GUIDE.md](ADVANCED_GUIDE.md)** ⭐ NEW - Performance tuning, troubleshooting, best practices
+- **[REALME_C63_GUIDE.md](REALME_C63_GUIDE.md)** ⭐ NEW - Complete Realme C63 setup guide with Termux, WSL, databases
+- **[ADVANCED_GUIDE.md](ADVANCED_GUIDE.md)** - Performance tuning, troubleshooting, best practices
 - **[COMPLETE_INSTALLATION_GUIDE.md](COMPLETE_INSTALLATION_GUIDE.md)** - Comprehensive installation guide (12KB)
 - **[OPTIMIZED_INSTALLATION_GUIDE.md](OPTIMIZED_INSTALLATION_GUIDE.md)** - Mobile device guide (8KB)
 - **[ANALYSIS_EXAMPLE.md](ANALYSIS_EXAMPLE.md)** - Analysis output examples
