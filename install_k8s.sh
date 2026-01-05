@@ -55,6 +55,7 @@ FLANNEL_COMMIT=${FLANNEL_COMMIT:-629cd70d816e56853aac967f92ed3dade7275baf}
 FLANNEL_MANIFEST_URL=${FLANNEL_MANIFEST_URL:-"https://raw.githubusercontent.com/flannel-io/flannel/${FLANNEL_COMMIT}/Documentation/kube-flannel.yml"}
 FLANNEL_MANIFEST_SHA256=${FLANNEL_MANIFEST_SHA256:-6583e9607befbf3c46cd04eb6fd960c2a446453b83699d95904bace95f49c410}
 INSTALL_TRIVY=${INSTALL_TRIVY:-false}
+TRIVY_VERSION=${TRIVY_VERSION:-0.58.1}
 
 if [ -z "${ADVERTISE_ADDRESS}" ]; then
   echo "Unable to determine ADVERTISE_ADDRESS automatically. Set ADVERTISE_ADDRESS explicitly." >&2
@@ -177,7 +178,6 @@ if [ "${INSTALL_TRIVY}" = "true" ]; then
     exit 1
   fi
   
-  TRIVY_VERSION=${TRIVY_VERSION:-0.58.1}
   TRIVY_ARCH=$(uname -m)
   case "${TRIVY_ARCH}" in
     x86_64) TRIVY_ARCH="64bit" ;;
@@ -196,7 +196,7 @@ if [ "${INSTALL_TRIVY}" = "true" ]; then
       exit 1
     }
   else
-    wget -O "${trivy_tmp}/trivy.tar.gz" "${TRIVY_URL}" || {
+    wget --tries=3 --timeout=30 -O "${trivy_tmp}/trivy.tar.gz" "${TRIVY_URL}" || {
       echo "Failed to download Trivy from ${TRIVY_URL}" >&2
       exit 1
     }
