@@ -2,6 +2,24 @@
 
 ## XTREME XAI v4.0.0 - Ultimate AI System für Termux/Android
 
+### ⚡ Schnellstart für Termux
+
+```bash
+# Komplette Installation in einem Befehl:
+pkg install git -y && git clone https://github.com/xxxyalaxx90xxx/Alex-.git && cd Alex- && chmod +x install.sh && ./install.sh
+```
+
+**Oder mit Quick-Install Script:**
+
+```bash
+# Quick-Install herunterladen und ausführen
+cd ~ && git clone https://github.com/xxxyalaxx90xxx/Alex-.git && cd Alex- && chmod +x quick-install.sh && ./quick-install.sh
+```
+
+📖 **Detaillierte Anleitung:** Siehe [TERMUX_INSTALLATION.md](TERMUX_INSTALLATION.md)
+
+---
+
 ### Übersicht
 XTREME XAI v4.0.0 ist ein vollständiges AI-System, optimiert für Android-Geräte mit Termux. Entwickelt speziell für das Realme C63 RMX3939, bietet es eine umfassende Plattform für künstliche Intelligenz, Machine Learning und Datenanalyse direkt auf Ihrem mobilen Gerät.
 
