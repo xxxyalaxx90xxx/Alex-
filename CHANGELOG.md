@@ -5,6 +5,64 @@ All notable changes to Xtreme XA-vI ® Cyber KI Elektronikx-Center-Matte® will 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-05
+
+### Added - Enhanced Features
+
+#### Backup & Restore Tool
+- **backup-restore.sh**: Vollständiges Backup & Restore System
+  - Automatische Sicherung aller Konfigurationsdateien
+  - SSH Keys und Git-Config Backup
+  - Paketlisten Export (pkg, pip, npm)
+  - Komprimierte Backups (.tar.gz)
+  - Einfache Wiederherstellung
+  - Auto-Backup beim Boot (mit Termux:Boot)
+  - Backup-Verwaltung (List, Delete)
+
+#### Development Environment Manager
+- **dev-env.sh**: Verwaltung isolierter Entwicklungsumgebungen
+  - Node.js Environments mit NVM
+  - Python Virtual Environments
+  - Go Workspaces
+  - Rust Project Setup
+  - Container-Environments (proot-distro)
+  - Quick-Setup für Frameworks:
+    - React Apps
+    - Vue Apps
+    - Flask APIs
+    - Express Servers
+  - Environment-Listing und -Löschung
+
+#### Server Manager
+- **server-manager.sh**: Zentrale Server-Verwaltung
+  - HTTP Server (Python)
+  - Node.js Server
+  - PHP Development Server
+  - Nginx Web Server
+  - Redis Server
+  - PostgreSQL Database
+  - Server Start/Stop/Restart
+  - Server-Status und Logs
+  - PID-Management
+  - Port-Überwachung
+
+### Improved
+- README.md erweitert mit neuen Tools
+- Dokumentation für alle neuen Features
+- Repository-Struktur aktualisiert
+
+### Technical Details
+**Neue Dateien:**
+- backup-restore.sh (342 Zeilen)
+- dev-env.sh (314 Zeilen)
+- server-manager.sh (335 Zeilen)
+
+**Gesamt:**
+- 15 Dateien
+- 4,393 Zeilen Code (+991 Zeilen)
+
+---
+
 ## [1.0.0] - 2026-01-05
 
 ### Added

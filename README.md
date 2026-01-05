@@ -48,6 +48,10 @@ Alex-/
 ├── install.sh                # 🔧 Haupt-Installationsskript
 ├── auto-clone.sh             # 📦 Automatisches Repository-Klonen
 ├── performance-optimizer.sh  # ⚡ Performance-Optimierung
+├── api-manager.sh            # 🔐 API-Token-Management
+├── backup-restore.sh         # 💾 Backup & Restore Tool
+├── dev-env.sh                # 🏗️ Development Environment Manager
+├── server-manager.sh         # 🖥️ Server Manager
 └── api-manager.sh            # 🔐 API-Token-Management
 ```
 
@@ -111,6 +115,27 @@ Alex-/
 - ✅ kubectl für Kubernetes
 - ✅ Podman Support
 - ✅ Docker-ähnliche Workflows
+
+### 💾 Backup & Restore
+- ✅ Automatisches Backup aller Konfigurationen
+- ✅ SSH Keys und Git-Config sichern
+- ✅ Paketlisten exportieren
+- ✅ Einfache Wiederherstellung
+- ✅ Auto-Backup beim Boot
+
+### 🏗️ Development Environment Manager
+- ✅ Isolierte Environments (Node.js, Python, Go, Rust)
+- ✅ Container-Environments (Ubuntu, Debian, etc.)
+- ✅ Quick-Setup für React, Vue, Flask, Express
+- ✅ Environment-Verwaltung
+
+### 🖥️ Server Manager
+- ✅ HTTP Server (Python)
+- ✅ Node.js Server
+- ✅ PHP Server
+- ✅ Nginx, Redis, PostgreSQL
+- ✅ Server-Logs und Status
+- ✅ Start/Stop/Restart Funktionen
 
 ---
 
@@ -185,6 +210,70 @@ chmod +x install.sh
 # - Gradle (./gradlew build)
 ```
 
+### 5️⃣ Backup & Restore
+
+```bash
+# Backup erstellen
+./backup-restore.sh create
+
+# Backup wiederherstellen
+./backup-restore.sh restore
+
+# Alle Backups anzeigen
+./backup-restore.sh list
+
+# Automatisches Backup einrichten
+./backup-restore.sh auto
+```
+
+### 6️⃣ Development Environments
+
+```bash
+# Node.js Environment erstellen
+./dev-env.sh create-node myapp 18
+
+# Python Virtual Environment
+./dev-env.sh create-python ml-project 3.11
+
+# Go Workspace
+./dev-env.sh create-go api-server
+
+# Rust Project
+./dev-env.sh create-rust my-rust-app
+
+# Quick-Setup für Frameworks
+./dev-env.sh quick react my-react-app
+./dev-env.sh quick flask my-flask-api
+
+# Alle Environments anzeigen
+./dev-env.sh list
+```
+
+### 7️⃣ Server Management
+
+```bash
+# HTTP Server starten
+./server-manager.sh start-http 8000
+
+# Node.js Server
+./server-manager.sh start-node 3000 app.js
+
+# Redis Server
+./server-manager.sh start-redis 6379
+
+# Alle Server anzeigen
+./server-manager.sh list
+
+# Server stoppen
+./server-manager.sh stop http 8000
+
+# Alle Server stoppen
+./server-manager.sh stop-all
+
+# Server-Logs ansehen
+./server-manager.sh logs http 8000 100
+```
+
 ---
 
 ## 🎯 Realme c63 (RMX3939) Optimierungen
@@ -214,6 +303,13 @@ Nach Installation verfügbar:
 update-system.sh     # Komplettes System-Update (pkg, pip, npm)
 gh-search.sh         # GitHub Repository-Suche
 system-info.sh       # Detaillierte System-Informationen
+```
+
+**Neue Management-Tools:**
+```bash
+backup-restore.sh    # Backup & Restore Tool
+dev-env.sh           # Development Environment Manager
+server-manager.sh    # Server Management
 ```
 
 **Aliases (in ~/.bashrc):**
