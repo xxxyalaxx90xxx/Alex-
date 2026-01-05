@@ -1,0 +1,23 @@
+# Temporary files
+*.tmp
+*.log
+*.swp
+*~
+
+# kubectl config backups
+*.kube.bak
+
+# Test output
+test-output/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.vscode/
+.idea/
+*.iml
+
+# Kubernetes test resources
+dns-test-pod-*
