@@ -129,7 +129,12 @@ fi
 DRY_RUN=${DRY_RUN:-false}
 if [[ "${DRY_RUN}" == "true" ]]; then
   log_warn "DRY RUN MODE - No changes will be made"
-  SUDO_CMD="echo [DRY-RUN] sudo"
+  # Create a wrapper function for dry-run
+  if [ -z "$SUDO_CMD" ]; then
+    SUDO_CMD="echo [DRY-RUN]"
+  else
+    SUDO_CMD="echo [DRY-RUN] sudo"
+  fi
 fi
 
 command_exists() {
@@ -172,7 +177,7 @@ check_prerequisites() {
   
   # Check if ports are available
   for port in 6443 2379 2380 10250 10251 10252; do
-    if command_exists ss && ss -tuln | grep -q ":${port} "; then
+    if command_exists ss && ss -tuln | grep -E ":${port}\s|:${port}$" >/dev/null 2>&1; then
       log_warn "Port ${port} is already in use. Kubernetes may fail to start."
     fi
   done
@@ -223,7 +228,9 @@ backup_file() {
   if [ -f "$file" ]; then
     local backup="${file}.backup.$(date +%Y%m%d_%H%M%S)"
     log_info "Backing up ${file} to ${backup}"
-    if [[ "${DRY_RUN}" != "true" ]]; then
+    if [[ "${DRY_RUN}" == "true" ]]; then
+      echo "[DRY-RUN] Would backup ${file} to ${backup}"
+    else
       $SUDO_CMD cp "$file" "$backup"
     fi
   fi
@@ -485,8 +492,8 @@ run_health_checks() {
       echo "$pods_output"
       
       # Count pending/failed pods
-      pending_count=$(echo "$pods_output" | grep -c "Pending" || true)
-      failed_count=$(echo "$pods_output" | grep -c "Error\|CrashLoopBackOff" || true)
+      pending_count=$(echo "$pods_output" | awk '$4 == "Pending" {count++} END {print count+0}')
+      failed_count=$(echo "$pods_output" | awk '$4 ~ /^(Error|CrashLoopBackOff|Failed)$/ {count++} END {print count+0}')
       
       if [ "$pending_count" -gt 0 ]; then
         log_warn "${pending_count} pod(s) are in Pending state"
