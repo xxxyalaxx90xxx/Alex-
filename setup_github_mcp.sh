@@ -99,7 +99,11 @@ install_github_mcp() {
     # Clone repository if not exists
     if [[ ! -d "$INSTALL_DIR/.git" ]]; then
         log_info "Cloning GitHub MCP Server repository..."
-        git clone https://github.com/github/github-mcp-server.git .
+        if ! git clone https://github.com/github/github-mcp-server.git . 2>/dev/null; then
+            log_error "Failed to clone repository. Please verify the URL is correct:"
+            log_error "https://github.com/github/github-mcp-server.git"
+            return 1
+        fi
     else
         log_info "Repository already exists, pulling latest changes..."
         git pull
@@ -112,6 +116,13 @@ install_github_mcp() {
     # Build the project
     log_info "Building GitHub MCP Server..."
     npm run build
+    
+    # Verify build output exists
+    if [[ ! -f "$INSTALL_DIR/dist/index.js" ]]; then
+        log_error "Build failed: dist/index.js not found"
+        log_error "The project structure may be different than expected"
+        return 1
+    fi
     
     log_success "GitHub MCP Server installed successfully"
 }
@@ -166,6 +177,16 @@ EOF
 
 GITHUB_MCP_DIR="${GITHUB_MCP_DIR:-$HOME/.github-mcp-server}"
 
+# Check if ai-assistant is available
+check_ai_assistant() {
+    if ! command -v ai-assistant >/dev/null 2>&1; then
+        echo "Warning: ai-assistant not found. AI features will be limited."
+        echo "Install with: ./setup_ai_assistant.sh"
+        return 1
+    fi
+    return 0
+}
+
 show_help() {
     cat << HELP
 AI-powered GitHub Operations
@@ -215,7 +236,11 @@ case "$1" in
             exit 1
         fi
         echo "Analyzing repository $2 with AI..."
-        github-mcp repos get "$2" | ai-assistant "Analyze this GitHub repository"
+        if check_ai_assistant; then
+            github-mcp repos get "$2" | ai-assistant "Analyze this GitHub repository"
+        else
+            github-mcp repos get "$2"
+        fi
         ;;
     suggest)
         if [[ -z "$2" ]]; then
@@ -224,7 +249,11 @@ case "$1" in
             exit 1
         fi
         echo "Getting AI suggestions for issue #$2..."
-        github-mcp issues get "$2" | ai-assistant "Suggest solutions for this GitHub issue"
+        if check_ai_assistant; then
+            github-mcp issues get "$2" | ai-assistant "Suggest solutions for this GitHub issue"
+        else
+            github-mcp issues get "$2"
+        fi
         ;;
     review)
         if [[ -z "$2" ]]; then
@@ -233,7 +262,11 @@ case "$1" in
             exit 1
         fi
         echo "AI reviewing pull request #$2..."
-        github-mcp pulls get "$2" | ai-assistant "Review this pull request and provide feedback"
+        if check_ai_assistant; then
+            github-mcp pulls get "$2" | ai-assistant "Review this pull request and provide feedback"
+        else
+            github-mcp pulls get "$2"
+        fi
         ;;
     commit)
         if [[ -z "$2" ]]; then
@@ -242,7 +275,12 @@ case "$1" in
             exit 1
         fi
         echo "Generating detailed commit message with AI..."
-        git diff --cached | ai-assistant "Generate a detailed commit message for this change. Original message: $2"
+        if check_ai_assistant; then
+            git diff --cached | ai-assistant "Generate a detailed commit message for this change. Original message: $2"
+        else
+            echo "AI assistant not available. Using basic message: $2"
+            echo "$2"
+        fi
         ;;
     help|--help|-h)
         show_help
@@ -268,6 +306,9 @@ create_service() {
     
     log_info "Creating systemd service..."
     
+    # Get node path
+    NODE_PATH=$(which node)
+    
     sudo tee /etc/systemd/system/github-mcp.service > /dev/null <<EOF
 [Unit]
 Description=GitHub MCP Server
@@ -278,7 +319,8 @@ Type=simple
 User=$USER
 WorkingDirectory=$INSTALL_DIR
 Environment="GITHUB_TOKEN=${GITHUB_TOKEN}"
-ExecStart=$(which node) $INSTALL_DIR/dist/index.js
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+ExecStart=$NODE_PATH $INSTALL_DIR/dist/index.js
 Restart=on-failure
 RestartSec=10
 
