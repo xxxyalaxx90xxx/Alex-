@@ -76,14 +76,17 @@ systemctl status k3s || service k3s status || echo "k3s service check skipped"
 echo "k3s installation complete in proot environment"
 INNER_SCRIPT
 
-chmod +x /tmp/k3s_install_inner.sh
-
 echo "[5/7] Install k3s in proot Ubuntu environment"
 echo "Note: This may take several minutes..."
-if ! proot-distro login ubuntu -- /bin/bash < /tmp/k3s_install_inner.sh; then
+# Copy script to proot environment
+proot-distro login ubuntu -- mkdir -p /tmp 2>/dev/null || true
+cat /tmp/k3s_install_inner.sh | proot-distro login ubuntu -- tee /tmp/k3s_install_inner.sh >/dev/null
+proot-distro login ubuntu -- chmod +x /tmp/k3s_install_inner.sh
+if ! proot-distro login ubuntu -- /tmp/k3s_install_inner.sh; then
   echo "Warning: k3s installation in proot encountered issues." >&2
   echo "You may need to manually complete the setup." >&2
 fi
+rm -f /tmp/k3s_install_inner.sh
 
 echo "[6/7] Install kubectl in Termux"
 if ! command_exists kubectl; then
@@ -122,9 +125,17 @@ echo "[7/7] Setup kubeconfig"
 mkdir -p "$(dirname "${KUBECONFIG_FILE}")"
 
 # Try to copy kubeconfig from proot environment
-if proot-distro login ubuntu -- test -f /etc/rancher/k3s/k3s.yaml; then
-  proot-distro login ubuntu -- cat /etc/rancher/k3s/k3s.yaml > "${KUBECONFIG_FILE}"
-  echo "Kubeconfig copied to ${KUBECONFIG_FILE}"
+if proot-distro login ubuntu -- test -f /etc/rancher/k3s/k3s.yaml 2>/dev/null; then
+  # Copy kubeconfig to Termux environment
+  KUBECONFIG_TMP=$(mktemp)
+  if proot-distro login ubuntu -- cat /etc/rancher/k3s/k3s.yaml > "${KUBECONFIG_TMP}" 2>/dev/null; then
+    mv "${KUBECONFIG_TMP}" "${KUBECONFIG_FILE}"
+    echo "Kubeconfig copied to ${KUBECONFIG_FILE}"
+  else
+    echo "Warning: Failed to read k3s.yaml from proot environment." >&2
+    echo "You may need to manually configure kubectl access." >&2
+    rm -f "${KUBECONFIG_TMP}"
+  fi
 else
   echo "Warning: Could not find k3s.yaml in proot environment." >&2
   echo "You may need to manually configure kubectl access." >&2
@@ -148,6 +159,3 @@ echo ""
 echo "Note: k3s runs inside the proot Ubuntu environment."
 echo "Some features may be limited on Android/Termux."
 echo "============================================"
-
-# Cleanup
-rm -f /tmp/k3s_install_inner.sh
