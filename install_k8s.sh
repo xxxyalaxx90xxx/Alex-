@@ -11,6 +11,7 @@ set -euo pipefail
 #   FLANNEL_MANIFEST_SHA256: Expected SHA256 for the flannel manifest (leave empty to skip check)
 #   MAX_RETRIES:        Maximum number of retries for network operations (default: 3)
 #   RETRY_DELAY:        Delay between retries in seconds (default: 5)
+#   STARTUP_WAIT_SECONDS: Wait time for cluster components to start (default: 5)
 
 # Logging functions
 log_info() {
@@ -335,14 +336,22 @@ sleep "$STARTUP_WAIT_SECONDS"
 # Check node status
 if command_exists kubectl; then
   log_info "Node status:"
-  if ! kubectl --kubeconfig="${KUBECONFIG_FILE}" get nodes -o wide 2>&1; then
+  node_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get nodes -o wide 2>&1)
+  if [ $? -eq 0 ]; then
+    echo "$node_output"
+  else
     log_error "Unable to get node status - cluster may need more time to initialize"
+    echo "$node_output"
   fi
   
   log_info ""
   log_info "System pods status:"
-  if ! kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces 2>&1; then
+  pods_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces 2>&1)
+  if [ $? -eq 0 ]; then
+    echo "$pods_output"
+  else
     log_error "Unable to get pods status - cluster may need more time to initialize"
+    echo "$pods_output"
   fi
   
   log_info ""
