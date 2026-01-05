@@ -62,10 +62,10 @@ apt-get install -y curl wget iptables
 # Download and install k3s
 K3S_VERSION="${K3S_VERSION:-}"
 if [ -n "${K3S_VERSION}" ]; then
-  INSTALL_K3S_VERSION="${K3S_VERSION}" sh -
+  curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="${K3S_VERSION}" sh -
 else
-  sh -
-fi < <(curl -sfL https://get.k3s.io)
+  curl -sfL https://get.k3s.io | sh -
+fi
 
 # Wait for k3s to start
 sleep 10
@@ -89,12 +89,31 @@ echo "[6/7] Install kubectl in Termux"
 if ! command_exists kubectl; then
   echo "Downloading kubectl..."
   KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-  curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/arm64/kubectl" || \
-  curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/arm/kubectl"
-  chmod +x kubectl
-  mkdir -p $PREFIX/bin
-  mv kubectl $PREFIX/bin/
-  echo "kubectl installed to $PREFIX/bin/kubectl"
+  
+  # Detect architecture
+  ARCH=$(uname -m)
+  case "${ARCH}" in
+    aarch64|arm64)
+      KUBECTL_ARCH="arm64"
+      ;;
+    armv7l|armv8l|arm)
+      KUBECTL_ARCH="arm"
+      ;;
+    *)
+      echo "Warning: Unsupported architecture ${ARCH}, trying arm64" >&2
+      KUBECTL_ARCH="arm64"
+      ;;
+  esac
+  
+  if curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${KUBECTL_ARCH}/kubectl"; then
+    chmod +x kubectl
+    mkdir -p $PREFIX/bin
+    mv kubectl $PREFIX/bin/
+    echo "kubectl installed to $PREFIX/bin/kubectl"
+  else
+    echo "Error: Failed to download kubectl for architecture ${KUBECTL_ARCH}" >&2
+    exit 1
+  fi
 else
   echo "kubectl already installed"
 fi
