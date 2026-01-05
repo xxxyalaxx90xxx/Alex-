@@ -69,7 +69,11 @@ pkg install -y wget curl proot-distro
 
 # Install additional useful tools
 echo "Installing additional tools (git, nano, openssh)..."
-pkg install -y git nano openssh 2>/dev/null || echo "Some optional packages skipped"
+if pkg install -y git nano openssh; then
+  echo "Additional tools installed ✓"
+else
+  echo "Note: Some optional packages could not be installed (this is non-critical)"
+fi
 
 echo "[3/8] Install proot-distro Ubuntu"
 if ! proot-distro list | grep -q "ubuntu (installed)"; then
@@ -89,8 +93,11 @@ echo "Setting up k3s in proot Ubuntu environment..."
 
 # Install dependencies in Ubuntu proot
 echo "Installing dependencies..."
-apt-get update -qq
-apt-get install -y curl wget iptables ca-certificates
+if apt-get update -q && apt-get install -y curl wget iptables ca-certificates; then
+  echo "Dependencies installed successfully"
+else
+  echo "Warning: Some dependencies may have failed to install" >&2
+fi
 
 # Download and install k3s
 echo "Downloading and installing k3s..."
@@ -294,9 +301,12 @@ echo "Verifying installation..."
 echo ""
 echo "✓ Checking kubectl installation..."
 if command_exists kubectl; then
-  # Try modern output format first, fall back to client-only
-  kubectl version --output=json 2>/dev/null | grep -q gitVersion && echo "kubectl installed" || \
-  kubectl version --client 2>/dev/null || echo "kubectl installed"
+  # Simple version check with fallback
+  if kubectl version --client >/dev/null 2>&1; then
+    echo "kubectl installed and working ✓"
+  else
+    echo "kubectl installed but version check failed"
+  fi
 else
   echo "✗ kubectl not found in PATH"
 fi
