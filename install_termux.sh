@@ -58,15 +58,10 @@ check_storage_permission
 
 echo ""
 echo "[1/8] Update Termux packages"
-if [ "$AUTO_YES" = "true" ]; then
-  pkg update -y
-  pkg upgrade -y
-else
-  echo "Updating package lists..."
-  pkg update -y
-  echo "Upgrading packages (this may take a while)..."
-  pkg upgrade -y
-fi
+[ "$AUTO_YES" != "true" ] && echo "Updating package lists..."
+pkg update -y
+[ "$AUTO_YES" != "true" ] && echo "Upgrading packages (this may take a while)..."
+pkg upgrade -y
 
 echo "[2/8] Install required packages"
 pkg install -y root-repo
@@ -79,12 +74,8 @@ pkg install -y git nano openssh 2>/dev/null || echo "Some optional packages skip
 echo "[3/8] Install proot-distro Ubuntu"
 if ! proot-distro list | grep -q "ubuntu (installed)"; then
   echo "Installing Ubuntu distribution (this will download ~200MB)..."
-  if [ "$AUTO_YES" = "true" ]; then
-    proot-distro install ubuntu
-  else
-    echo "This may take several minutes depending on your connection..."
-    proot-distro install ubuntu
-  fi
+  [ "$AUTO_YES" != "true" ] && echo "This may take several minutes depending on your connection..."
+  proot-distro install ubuntu
 else
   echo "Ubuntu distribution already installed ✓"
 fi
@@ -282,11 +273,11 @@ HELPER_STATUS
 chmod +x "$HOME/k3s-status.sh"
 
 # Create comprehensive kubectl wrapper
-cat > "$PREFIX/bin/k3s-kubectl" <<'KUBECTL_WRAPPER'
+cat > "$PREFIX/bin/k3s-kubectl" <<KUBECTL_WRAPPER
 #!/data/data/com.termux/files/usr/bin/bash
 # Wrapper for kubectl with automatic kubeconfig setup
-export KUBECONFIG="$HOME/.kube/config"
-kubectl "$@"
+export KUBECONFIG="${KUBECONFIG_FILE}"
+kubectl "\$@"
 KUBECTL_WRAPPER
 chmod +x "$PREFIX/bin/k3s-kubectl"
 
@@ -303,7 +294,9 @@ echo "Verifying installation..."
 echo ""
 echo "✓ Checking kubectl installation..."
 if command_exists kubectl; then
-  kubectl version --client --short 2>/dev/null || kubectl version --client 2>/dev/null || echo "kubectl installed"
+  # Try modern output format first, fall back to client-only
+  kubectl version --output=json 2>/dev/null | grep -q gitVersion && echo "kubectl installed" || \
+  kubectl version --client 2>/dev/null || echo "kubectl installed"
 else
   echo "✗ kubectl not found in PATH"
 fi
