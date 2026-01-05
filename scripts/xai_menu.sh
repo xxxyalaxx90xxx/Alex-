@@ -88,10 +88,16 @@ show_main_menu() {
     echo -e "  ${MAGENTA}10)${NC} VPN-Manager"
     echo -e "  ${MAGENTA}11)${NC} Tor-Integration"
     echo
+    echo -e "${CYAN}━━━ Anwendungsentwicklung ━━━${NC}"
+    echo -e "  ${BLUE}12)${NC} App Builder (Python/Node/CLI)"
+    echo -e "  ${BLUE}13)${NC} APK Builder (Android)"
+    echo -e "  ${BLUE}14)${NC} Web App Generator (PWA)"
+    echo -e "  ${BLUE}15)${NC} AI Integration (Cyborg System)"
+    echo
     echo -e "${CYAN}━━━ Dashboard & Sonstiges ━━━${NC}"
-    echo -e "  ${YELLOW}12)${NC} Dashboard starten"
-    echo -e "  ${YELLOW}13)${NC} Logs anzeigen"
-    echo -e "  ${YELLOW}14)${NC} Einstellungen"
+    echo -e "  ${YELLOW}16)${NC} Dashboard starten"
+    echo -e "  ${YELLOW}17)${NC} Logs anzeigen"
+    echo -e "  ${YELLOW}18)${NC} Einstellungen"
     echo
     echo -e "  ${RED}0)${NC} Beenden"
     echo
@@ -467,6 +473,70 @@ menu_tor_integration() {
     read -p "Drücke Enter zum Fortfahren..."
 }
 
+# App builder menu
+menu_app_builder() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Application Builder ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/app_builder.sh" ]]; then
+        bash "$SCRIPT_DIR/app_builder.sh"
+    else
+        echo -e "${RED}Error: app_builder.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# APK builder menu
+menu_apk_builder() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ APK Builder ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/apk_builder.sh" ]]; then
+        bash "$SCRIPT_DIR/apk_builder.sh"
+    else
+        echo -e "${RED}Error: apk_builder.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Web app generator menu
+menu_webapp_generator() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Web App Generator ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/webapp_generator.sh" ]]; then
+        bash "$SCRIPT_DIR/webapp_generator.sh"
+    else
+        echo -e "${RED}Error: webapp_generator.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# AI integration menu
+menu_ai_integration() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ AI Integration (Cyborg System) ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/ai_integration.sh" ]]; then
+        bash "$SCRIPT_DIR/ai_integration.sh"
+    else
+        echo -e "${RED}Error: ai_integration.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
 # Main loop
 main() {
     while true; do
@@ -485,12 +555,18 @@ main() {
             9) menu_emulator_installer ;;
             10) menu_vpn_manager ;;
             11) menu_tor_integration ;;
-            12) menu_dashboard ;;
-            13) menu_logs ;;
-            14) menu_settings ;;
+            12) menu_app_builder ;;
+            13) menu_apk_builder ;;
+            14) menu_webapp_generator ;;
+            15) menu_ai_integration ;;
+            16) menu_dashboard ;;
+            17) menu_logs ;;
+            18) menu_settings ;;
             0)
                 clear_screen
                 echo -e "${GREEN}Auf Wiedersehen!${NC}"
+                echo -e "${CYAN}© Elektronikx-Center-Matte ®${NC}"
+                echo -e "${CYAN}by Alexander Mathey (xyalaxxx90@gmail.com)${NC}"
                 exit 0
                 ;;
             *)
