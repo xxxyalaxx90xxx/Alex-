@@ -4,6 +4,10 @@
 
 This repository provides a complete solution for Kubernetes cluster setup with automated installation, verification, analysis, and optimization capabilities.
 
+## 📚 Additional Documentation
+
+- **[GitHub MCP Server Installation Guide](GITHUB_MCP_SERVER.md)** - Install and configure the GitHub MCP server with Docker for VS Code and other IDEs
+
 ## Quick Start
 
 ### Option 1: Complete Automated Workflow (Recommended)
