@@ -6,6 +6,35 @@ This repository provides a complete solution for Kubernetes cluster setup with a
 
 ## Quick Start
 
+### Option 1: Complete Automated Workflow (Recommended)
+
+Run the complete automation script after installing the cluster:
+
+```bash
+# 1. Install the cluster
+chmod +x install_k8s.sh
+sudo ./install_k8s.sh
+
+# 2. Run complete automation (verify + analyze + optimize)
+chmod +x complete_k8s.sh
+./complete_k8s.sh
+```
+
+**What it does:**
+- ✅ Verifies cluster installation and health
+- 🔍 Analyzes performance, security, and resources  
+- ⚡ Provides optimization recommendations
+
+**Options:**
+```bash
+./complete_k8s.sh --help              # Show all options
+./complete_k8s.sh --verify-only       # Only verification
+./complete_k8s.sh --analyze-only      # Only analysis
+./complete_k8s.sh --skip-verify       # Skip verification step
+```
+
+### Option 2: Individual Scripts
+
 ### 1. Install Kubernetes Cluster
 
 Run the automated installation script to install kubeadm/kubelet/kubectl, enable containerd CRI, initialize the control plane, apply flannel, and optionally configure hugepages:

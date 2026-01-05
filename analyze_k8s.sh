@@ -79,7 +79,6 @@ analyze_cluster_health() {
   
   not_ready_nodes=$(echo "${node_status}" | grep -v "Ready" | wc -l)
   total_nodes=$(echo "${node_status}" | wc -l)
-  ready_nodes=$((total_nodes - not_ready_nodes))
   
   if [ "${not_ready_nodes}" -gt 0 ]; then
     log_warning "${not_ready_nodes} out of ${total_nodes} nodes are not Ready"
