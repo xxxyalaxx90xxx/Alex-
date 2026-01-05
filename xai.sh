@@ -199,9 +199,15 @@ perform_updates() {
     # System-Pakete aktualisieren
     if command -v pkg &> /dev/null; then
         echo ""
-        print_info "Aktualisiere System-Pakete..."
-        pkg update -y && pkg upgrade -y
-        print_success "System-Pakete aktualisiert"
+        read -p "$(echo -e ${YELLOW}System-Pakete aktualisieren? [J/n]: ${NC})" -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[JjYy]$ ]] || [[ -z $REPLY ]]; then
+            print_info "Aktualisiere System-Pakete..."
+            pkg update -y && pkg upgrade -y
+            print_success "System-Pakete aktualisiert"
+        else
+            print_info "System-Paket-Update übersprungen"
+        fi
     fi
     
     # Python-Pakete aktualisieren (optional)
@@ -225,8 +231,13 @@ perform_updates() {
         echo
         if [[ $REPLY =~ ^[JjYy]$ ]] || [[ -z $REPLY ]]; then
             print_info "Aktualisiere XAI..."
-            git pull
-            print_success "XAI aktualisiert"
+            # Prüfe Git-Status vor dem Pull
+            if [ -n "$(git status --porcelain)" ]; then
+                print_warning "Lokale Änderungen gefunden. Bitte erst committen oder stashen."
+            else
+                git pull
+                print_success "XAI aktualisiert"
+            fi
         fi
     fi
     

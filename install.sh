@@ -156,7 +156,7 @@ run_prechecks() {
     show_progress $check_count $total_checks "Internetverbindung prüfen..."
     sleep 0.5
     echo ""
-    if ping -c 1 8.8.8.8 &> /dev/null; then
+    if ping -c 1 8.8.8.8 &> /dev/null || ping -c 1 1.1.1.1 &> /dev/null; then
         print_success "Internetverbindung aktiv"
     else
         print_error "Keine Internetverbindung - Installation kann nicht fortgesetzt werden"
@@ -236,7 +236,6 @@ install_system_dependencies() {
         "termux-tools"
         "termux-api"
         "python"
-        "nodejs"
         "nodejs-lts"
         "clang"
         "cmake"
@@ -289,12 +288,15 @@ install_python_packages() {
     # Hinweis: pip upgrade ist in Termux verboten
     print_warning "Hinweis: pip upgrade wird übersprungen (in Termux nicht erlaubt)"
     
+    # Log-Verzeichnis erstellen falls nicht vorhanden
+    mkdir -p "$HOME/.xai_install_logs"
+    
     # Python-Pakete installieren
-    if python -m pip install -r requirements.txt --no-warn-script-location 2>&1 | tee /tmp/pip_install.log; then
+    if python -m pip install -r requirements.txt --no-warn-script-location 2>&1 | tee "$HOME/.xai_install_logs/pip_install.log"; then
         print_success "Python-Pakete erfolgreich installiert"
     else
         print_warning "Einige Python-Pakete konnten nicht installiert werden"
-        print_info "Details siehe: /tmp/pip_install.log"
+        print_info "Details siehe: $HOME/.xai_install_logs/pip_install.log"
     fi
     
     echo ""
