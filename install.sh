@@ -276,8 +276,10 @@ install_dependencies() {
     
     # Python-Pakete
     info "Installiere Python-Pakete..."
-    pip install --upgrade pip 2>&1 | tee -a "$LOG_FILE"
-    pip install numpy scipy pandas flask fastapi uvicorn pyyaml 2>&1 | tee -a "$LOG_FILE"
+    # NOTE: Do NOT upgrade pip in Termux - it breaks python-pip package
+    pip install numpy scipy pandas flask fastapi uvicorn pyyaml requests 2>&1 | tee -a "$LOG_FILE" || {
+        warn "Einige Python-Pakete konnten nicht installiert werden - fahre fort"
+    }
     
     success "Abhängigkeiten installiert"
 }
