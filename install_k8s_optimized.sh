@@ -205,7 +205,24 @@ if [ "${INSTALL_MODE}" = "lightweight" ]; then
   
   # Install K3s
   if ! command_exists k3s; then
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server --bind-address=${ADVERTISE_ADDRESS} --cluster-cidr=${POD_CIDR} ${K3S_EXTRA_ARGS}" sh -
+    echo "Downloading K3s installer..."
+    k3s_installer=$(mktemp)
+    cleanup_k3s_installer() { rm -f "${k3s_installer}"; }
+    trap cleanup_k3s_installer EXIT
+    
+    curl -sfL https://get.k3s.io -o "${k3s_installer}"
+    
+    # Verify installer was downloaded successfully
+    if [ ! -s "${k3s_installer}" ]; then
+      echo "Failed to download K3s installer" >&2
+      exit 1
+    fi
+    
+    # Execute installer
+    INSTALL_K3S_EXEC="server --bind-address=${ADVERTISE_ADDRESS} --cluster-cidr=${POD_CIDR} ${K3S_EXTRA_ARGS}" sh "${k3s_installer}"
+    
+    trap - EXIT
+    cleanup_k3s_installer
   else
     echo "K3s already installed, skipping..."
   fi
@@ -278,11 +295,33 @@ EOF
   elif [ "${OS_TYPE}" = "ubuntu" ] || [ "${OS_TYPE}" = "debian" ]; then
     echo "[2/6] Install dependencies"
     $SUDO_CMD apt-get update
-    $SUDO_CMD apt-get install -y apt-transport-https ca-certificates curl
+    $SUDO_CMD apt-get install -y apt-transport-https ca-certificates curl gnupg
     
     echo "[3/6] Add Kubernetes repository"
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | $SUDO_CMD gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    # Download GPG key to temporary file first
+    gpg_key_tmp=$(mktemp)
+    cleanup_gpg_key() { rm -f "${gpg_key_tmp}"; }
+    trap cleanup_gpg_key EXIT
+    
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key -o "${gpg_key_tmp}"
+    
+    # Verify key was downloaded
+    if [ ! -s "${gpg_key_tmp}" ]; then
+      echo "Failed to download Kubernetes GPG key" >&2
+      exit 1
+    fi
+    
+    # Create keyrings directory if it doesn't exist
+    $SUDO_CMD mkdir -p /etc/apt/keyrings
+    
+    # Add the GPG key
+    $SUDO_CMD gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg < "${gpg_key_tmp}"
+    
+    # Add repository
     echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | $SUDO_CMD tee /etc/apt/sources.list.d/kubernetes.list
+    
+    trap - EXIT
+    cleanup_gpg_key
     
     $SUDO_CMD apt-get update
     $SUDO_CMD apt-get install -y kubelet kubeadm kubectl
@@ -375,7 +414,7 @@ EOF
   manifest_tmp=$(mktemp)
   cleanup_manifest() { rm -f "${manifest_tmp}"; }
   trap cleanup_manifest EXIT
-  curl -L --fail "${FLANNEL_MANIFEST_URL}" -o "${manifest_tmp}"
+  curl -fsSL --fail "${FLANNEL_MANIFEST_URL}" -o "${manifest_tmp}"
   if [ -n "${FLANNEL_MANIFEST_SHA256}" ]; then
     downloaded_sha=$(sha256sum "${manifest_tmp}" | awk '{print $1}')
     if [ "${downloaded_sha}" != "${FLANNEL_MANIFEST_SHA256}" ]; then
