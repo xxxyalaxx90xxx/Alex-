@@ -1,6 +1,52 @@
 # Alex - Setup K8S by kubeadm
 
-## Fully automated install
+## 🚀 Optimized Installation (NEW - Realme C63 & Mobile Devices Support)
+
+**Automatic installation with resource detection and optimization for mobile devices!**
+
+The new optimized installer automatically detects your system and chooses the best Kubernetes distribution:
+- **Full Kubernetes (kubeadm)** for servers and powerful machines (>2GB RAM)
+- **Lightweight K3s** for resource-constrained devices like Realme C63, mobile devices, and ARM devices (<2GB RAM)
+
+```bash
+chmod +x install_k8s_optimized.sh
+sudo ./install_k8s_optimized.sh
+```
+
+### Features:
+- ✅ **Automatic resource detection** - Detects CPU, memory, architecture
+- ✅ **Smart installation mode** - Chooses optimal K8s distribution
+- ✅ **Multi-architecture support** - AMD64, ARM64, ARM (mobile devices)
+- ✅ **Multi-OS support** - CentOS/RHEL, Ubuntu/Debian
+- ✅ **Mobile device optimization** - Special optimizations for Realme C63 and similar devices
+- ✅ **Minimal resource footprint** - K3s uses <512MB RAM
+- ✅ **Termux support** - Can run in Android Termux environment
+
+### Configuration Options:
+```bash
+# Force lightweight mode (K3s) even on powerful machines
+INSTALL_MODE=lightweight sudo ./install_k8s_optimized.sh
+
+# Force full Kubernetes mode
+INSTALL_MODE=full sudo ./install_k8s_optimized.sh
+
+# Custom API server address
+ADVERTISE_ADDRESS=192.168.1.100 sudo ./install_k8s_optimized.sh
+
+# Skip memory check prompt
+yes | sudo ./install_k8s_optimized.sh
+```
+
+### System Requirements:
+| Device Type | Minimum RAM | Recommended | K8s Distribution |
+|------------|-------------|-------------|------------------|
+| Mobile devices (Realme C63, etc.) | 1GB | 2GB | K3s (Lightweight) |
+| ARM devices (Raspberry Pi, etc.) | 1GB | 2GB | K3s (Lightweight) |
+| Standard servers | 2GB | 4GB | Full Kubernetes |
+
+---
+
+## Fully automated install (Legacy)
 
 Run the provided script to install kubeadm/kubelet/kubectl, enable containerd CRI, initialize the control plane, apply flannel, and optionally configure hugepages without manual edits:
 
@@ -102,7 +148,11 @@ chmod +x analyze_k8s.sh
 ./analyze_k8s.sh
 ```
 
+**Now supports both Full Kubernetes and K3s installations!** The script automatically detects your K8s distribution and kubeconfig location.
+
 The analysis script will:
+- Detect system architecture and resources (optimized for Realme C63 and mobile devices)
+- Identify K8s distribution (Full Kubernetes or K3s)
 - Collect cluster version and configuration information
 - Analyze node status and resource allocation
 - Review all pods across namespaces and their health

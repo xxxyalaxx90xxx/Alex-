@@ -3,12 +3,47 @@ set -euo pipefail
 
 # Kubernetes Cluster Data Analysis Script
 # Analyzes the current Kubernetes cluster setup and generates a detailed report
+# Supports both full Kubernetes (kubeadm) and lightweight K3s installations
+# Optimized for mobile devices like Realme C63
 
-KUBECONFIG_FILE=${KUBECONFIG_FILE:-$HOME/.kube/config}
+# Auto-detect K3s kubeconfig if exists
+if [ -f /etc/rancher/k3s/k3s.yaml ] && [ ! -f "$HOME/.kube/config" ]; then
+  KUBECONFIG_FILE=${KUBECONFIG_FILE:-/etc/rancher/k3s/k3s.yaml}
+else
+  KUBECONFIG_FILE=${KUBECONFIG_FILE:-$HOME/.kube/config}
+fi
+
 OUTPUT_FILE=${OUTPUT_FILE:-k8s_analysis_report.txt}
 
 echo "=== Kubernetes Cluster Data Analysis ===" | tee "${OUTPUT_FILE}"
 echo "Timestamp: $(date)" | tee -a "${OUTPUT_FILE}"
+echo "" | tee -a "${OUTPUT_FILE}"
+
+# Detect system information
+echo "=== 0. System Information ===" | tee -a "${OUTPUT_FILE}"
+echo "" | tee -a "${OUTPUT_FILE}"
+
+echo "Architecture: $(uname -m)" | tee -a "${OUTPUT_FILE}"
+echo "Kernel: $(uname -r)" | tee -a "${OUTPUT_FILE}"
+echo "OS: $(uname -o 2>/dev/null || echo 'Unknown')" | tee -a "${OUTPUT_FILE}"
+
+# Memory and CPU info
+MEM_MB=$(awk '/MemTotal:/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo "Unknown")
+CPU_CORES=$(nproc 2>/dev/null || echo "Unknown")
+echo "Total Memory: ${MEM_MB} MB" | tee -a "${OUTPUT_FILE}"
+echo "CPU Cores: ${CPU_CORES}" | tee -a "${OUTPUT_FILE}"
+
+# Detect K8s distribution
+if command -v k3s >/dev/null 2>&1; then
+  echo "K8s Distribution: K3s (Lightweight)" | tee -a "${OUTPUT_FILE}"
+  K3S_VERSION=$(k3s --version 2>/dev/null | head -1 || echo "Unknown")
+  echo "K3s Version: ${K3S_VERSION}" | tee -a "${OUTPUT_FILE}"
+elif command -v kubeadm >/dev/null 2>&1; then
+  echo "K8s Distribution: Full Kubernetes (kubeadm)" | tee -a "${OUTPUT_FILE}"
+else
+  echo "K8s Distribution: Unknown" | tee -a "${OUTPUT_FILE}"
+fi
+
 echo "" | tee -a "${OUTPUT_FILE}"
 
 # Check if kubectl is available
@@ -20,6 +55,7 @@ fi
 # Check if kubeconfig exists
 if [ ! -f "${KUBECONFIG_FILE}" ]; then
   echo "ERROR: kubeconfig file not found at ${KUBECONFIG_FILE}" | tee -a "${OUTPUT_FILE}"
+  echo "Tip: For K3s, try: export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" | tee -a "${OUTPUT_FILE}"
   exit 1
 fi
 
