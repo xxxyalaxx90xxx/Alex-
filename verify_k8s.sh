@@ -253,8 +253,8 @@ verify_all_pods() {
 verify_dns() {
   log_info "Testing DNS resolution..."
   
-  # Create a test pod to verify DNS
-  test_pod_name="dns-test-pod-$$"
+  # Create a test pod to verify DNS with timestamp for uniqueness
+  test_pod_name="dns-test-pod-$(date +%s)-$$"
   
   kubectl --kubeconfig="${KUBECONFIG_FILE}" run "${test_pod_name}" \
     --image=busybox:1.28 \

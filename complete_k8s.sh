@@ -7,6 +7,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KUBECONFIG_FILE=${KUBECONFIG_FILE:-$HOME/.kube/config}
 
+# Required scripts
+REQUIRED_SCRIPTS=("verify_k8s.sh" "analyze_k8s.sh" "optimize_k8s.sh")
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -39,7 +42,7 @@ log_error() {
 check_scripts() {
   local missing=0
   
-  for script in verify_k8s.sh analyze_k8s.sh optimize_k8s.sh; do
+  for script in "${REQUIRED_SCRIPTS[@]}"; do
     if [ ! -f "${SCRIPT_DIR}/${script}" ]; then
       log_error "Required script not found: ${script}"
       missing=1

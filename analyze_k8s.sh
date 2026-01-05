@@ -142,13 +142,13 @@ analyze_resource_usage() {
   log_info "Top resource-consuming pods:"
   kubectl --kubeconfig="${KUBECONFIG_FILE}" top pods --all-namespaces 2>/dev/null | head -20 || log_warning "Metrics server not available"
   
-  # Check for resource limits and requests
+  # Check for resource limits and requests - looking for missing or empty resource specs
   log_info "Checking pods without resource limits..."
-  pods_without_limits=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces -o json 2>/dev/null | \
-    grep -c '"limits": {}' || echo "0")
+  containers_without_resources=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces -o json 2>/dev/null | \
+    grep -E '"resources":\s*\{\}|"resources":\s*null' | wc -l || echo "0")
   
-  if [ "${pods_without_limits}" -gt 0 ]; then
-    log_warning "${pods_without_limits} container(s) running without resource limits"
+  if [ "${containers_without_resources}" -gt 0 ]; then
+    log_warning "${containers_without_resources} container(s) running without resource limits"
   else
     log_success "All containers have resource limits defined"
   fi

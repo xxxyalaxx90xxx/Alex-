@@ -101,13 +101,12 @@ optimize_pod_resources() {
   # Find pods without resource requests/limits
   log_info "Checking for pods without resource requests or limits..."
   
-  pods_json=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces -o json 2>/dev/null)
+  # Check for containers missing resource specifications using jsonpath
+  containers_without_resources=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces -o json 2>/dev/null | \
+    grep -E '"resources":\s*\{\}|"resources":\s*null' | wc -l || echo "0")
   
-  pods_without_requests=$(echo "${pods_json}" | grep -c '"requests": null' || echo "0")
-  pods_without_limits=$(echo "${pods_json}" | grep -c '"limits": null' || echo "0")
-  
-  if [ "${pods_without_requests}" -gt 0 ] || [ "${pods_without_limits}" -gt 0 ]; then
-    log_warning "Found pods without proper resource configuration"
+  if [ "${containers_without_resources}" -gt 0 ]; then
+    log_warning "Found ${containers_without_resources} container(s) without proper resource configuration"
     log_recommendation "Add resource requests and limits to pod specifications:"
     echo "  resources:"
     echo "    requests:"

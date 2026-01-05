@@ -216,8 +216,6 @@ sudo systemctl restart kubelet
 kubectl get nodes -oyaml | grep hugepages-2Mi
 ```
 
-```
-
 ## 🎯 Advanced Usage
 
 ### Custom Configuration
