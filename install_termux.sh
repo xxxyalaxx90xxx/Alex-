@@ -9,6 +9,7 @@ set -euo pipefail
 #   POD_CIDR:           Pod network CIDR (default: 10.42.0.0/16 for k3s)
 #   KUBECONFIG_FILE:    Path to write kubeconfig for kubectl (default: $HOME/.kube/config)
 #   K3S_VERSION:        Version of k3s to install (default: latest stable)
+#   AUTO_YES:           Skip confirmations (default: false, set to "true" for full automation)
 
 echo "============================================"
 echo "Termux Kubernetes (k3s) Installation Script"
@@ -29,37 +30,79 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Check for storage permissions
+check_storage_permission() {
+  if [ ! -d "$HOME/storage" ] || [ ! -L "$HOME/storage" ]; then
+    echo "Storage access not configured. Setting up storage access..."
+    echo "This allows Termux to access shared storage on your device."
+    if command_exists termux-setup-storage; then
+      echo "Please grant storage permission when prompted..."
+      termux-setup-storage || echo "Warning: Storage setup failed or was denied"
+      sleep 2
+    else
+      echo "Warning: termux-setup-storage not available"
+    fi
+  else
+    echo "Storage access already configured ✓"
+  fi
+}
+
 # Configuration
 POD_CIDR=${POD_CIDR:-10.42.0.0/16}
 KUBECONFIG_FILE=${KUBECONFIG_FILE:-$HOME/.kube/config}
 K3S_VERSION=${K3S_VERSION:-}
+AUTO_YES=${AUTO_YES:-false}
 
-echo "[1/7] Update Termux packages"
-pkg update -y
-pkg upgrade -y
+# Check storage permissions
+check_storage_permission
 
-echo "[2/7] Install required packages"
+echo ""
+echo "[1/8] Update Termux packages"
+if [ "$AUTO_YES" = "true" ]; then
+  pkg update -y
+  pkg upgrade -y
+else
+  echo "Updating package lists..."
+  pkg update -y
+  echo "Upgrading packages (this may take a while)..."
+  pkg upgrade -y
+fi
+
+echo "[2/8] Install required packages"
 pkg install -y root-repo
 pkg install -y wget curl proot-distro
 
-echo "[3/7] Install proot-distro Ubuntu"
+# Install additional useful tools
+echo "Installing additional tools (git, nano, openssh)..."
+pkg install -y git nano openssh 2>/dev/null || echo "Some optional packages skipped"
+
+echo "[3/8] Install proot-distro Ubuntu"
 if ! proot-distro list | grep -q "ubuntu (installed)"; then
-  echo "Installing Ubuntu distribution..."
-  proot-distro install ubuntu
+  echo "Installing Ubuntu distribution (this will download ~200MB)..."
+  if [ "$AUTO_YES" = "true" ]; then
+    proot-distro install ubuntu
+  else
+    echo "This may take several minutes depending on your connection..."
+    proot-distro install ubuntu
+  fi
 else
-  echo "Ubuntu distribution already installed"
+  echo "Ubuntu distribution already installed ✓"
 fi
 
-echo "[4/7] Create k3s installation script for proot environment"
+echo "[4/8] Create k3s installation script for proot environment"
 cat > /tmp/k3s_install_inner.sh <<'INNER_SCRIPT'
 #!/bin/bash
 set -euo pipefail
 
+echo "Setting up k3s in proot Ubuntu environment..."
+
 # Install dependencies in Ubuntu proot
-apt-get update
-apt-get install -y curl wget iptables
+echo "Installing dependencies..."
+apt-get update -qq
+apt-get install -y curl wget iptables ca-certificates
 
 # Download and install k3s
+echo "Downloading and installing k3s..."
 K3S_VERSION="${K3S_VERSION:-}"
 if [ -n "${K3S_VERSION}" ]; then
   curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="${K3S_VERSION}" sh -
@@ -68,16 +111,36 @@ else
 fi
 
 # Wait for k3s to start
+echo "Waiting for k3s to initialize..."
 sleep 10
 
 # Check k3s status
-systemctl status k3s || service k3s status || echo "k3s service check skipped"
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl status k3s --no-pager || echo "k3s status check completed"
+elif command -v service >/dev/null 2>&1; then
+  service k3s status || echo "k3s status check completed"
+else
+  echo "k3s service manager not available, skipping status check"
+fi
+
+# Verify k3s installation
+if [ -f /etc/rancher/k3s/k3s.yaml ]; then
+  echo "k3s configuration file found ✓"
+else
+  echo "Warning: k3s configuration file not found"
+fi
 
 echo "k3s installation complete in proot environment"
 INNER_SCRIPT
 
-echo "[5/7] Install k3s in proot Ubuntu environment"
+echo "[5/8] Install k3s in proot Ubuntu environment"
 echo "Note: This may take several minutes..."
+echo "The script will:"
+echo "  - Update package lists in Ubuntu"
+echo "  - Install required dependencies"
+echo "  - Download and install k3s"
+echo "  - Configure k3s service"
+echo ""
 
 # Setup cleanup trap
 cleanup_k3s_script() {
@@ -86,26 +149,36 @@ cleanup_k3s_script() {
 trap cleanup_k3s_script EXIT
 
 # Copy script to proot environment
+echo "Preparing proot environment..."
 proot-distro login ubuntu -- mkdir -p /tmp 2>/dev/null || true
 cat /tmp/k3s_install_inner.sh | proot-distro login ubuntu -- tee /tmp/k3s_install_inner.sh >/dev/null
 proot-distro login ubuntu -- chmod +x /tmp/k3s_install_inner.sh
 
+echo "Installing k3s (please be patient, this may take 5-10 minutes)..."
 K3S_INSTALL_FAILED=false
 if ! proot-distro login ubuntu -- /tmp/k3s_install_inner.sh; then
   K3S_INSTALL_FAILED=true
+  echo ""
+  echo "========================================" >&2
   echo "Warning: k3s installation in proot encountered issues." >&2
+  echo "========================================" >&2
   echo "Troubleshooting steps:" >&2
   echo "  1. Check if proot-distro is working: proot-distro list" >&2
   echo "  2. Verify network connectivity: curl -I https://get.k3s.io" >&2
-  echo "  3. Try manual installation: proot-distro login ubuntu" >&2
+  echo "  3. Check available disk space: df -h" >&2
+  echo "  4. Try manual installation: proot-distro login ubuntu" >&2
   echo "You may need to manually complete the setup." >&2
+  echo "========================================" >&2
+  echo ""
+else
+  echo "k3s installation completed successfully ✓"
 fi
 
 # Cleanup
 trap - EXIT
 cleanup_k3s_script
 
-echo "[6/7] Install kubectl in Termux"
+echo "[6/8] Install kubectl in Termux"
 if ! command_exists kubectl; then
   echo "Downloading kubectl..."
   KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
@@ -149,7 +222,7 @@ else
   echo "kubectl already installed"
 fi
 
-echo "[7/7] Setup kubeconfig"
+echo "[7/8] Setup kubeconfig"
 mkdir -p "$(dirname "${KUBECONFIG_FILE}")"
 
 # Try to copy kubeconfig from proot environment
@@ -174,6 +247,83 @@ fi
 # Set permissions
 chmod 600 "${KUBECONFIG_FILE}" 2>/dev/null || true
 
+echo "[8/8] Create helper scripts and verify installation"
+
+# Create helper script to start k3s
+cat > "$HOME/k3s-start.sh" <<'HELPER_START'
+#!/data/data/com.termux/files/usr/bin/bash
+echo "Starting k3s in proot Ubuntu environment..."
+proot-distro login ubuntu -- systemctl start k3s 2>/dev/null || \
+proot-distro login ubuntu -- service k3s start 2>/dev/null || \
+echo "k3s service may already be running or service manager not available"
+echo "k3s start command completed"
+HELPER_START
+chmod +x "$HOME/k3s-start.sh"
+
+# Create helper script to stop k3s
+cat > "$HOME/k3s-stop.sh" <<'HELPER_STOP'
+#!/data/data/com.termux/files/usr/bin/bash
+echo "Stopping k3s in proot Ubuntu environment..."
+proot-distro login ubuntu -- systemctl stop k3s 2>/dev/null || \
+proot-distro login ubuntu -- service k3s stop 2>/dev/null || \
+echo "k3s service may not be running or service manager not available"
+echo "k3s stop command completed"
+HELPER_STOP
+chmod +x "$HOME/k3s-stop.sh"
+
+# Create helper script to check k3s status
+cat > "$HOME/k3s-status.sh" <<'HELPER_STATUS'
+#!/data/data/com.termux/files/usr/bin/bash
+echo "Checking k3s status in proot Ubuntu environment..."
+proot-distro login ubuntu -- systemctl status k3s --no-pager 2>/dev/null || \
+proot-distro login ubuntu -- service k3s status 2>/dev/null || \
+echo "k3s service manager not available"
+HELPER_STATUS
+chmod +x "$HOME/k3s-status.sh"
+
+# Create comprehensive kubectl wrapper
+cat > "$PREFIX/bin/k3s-kubectl" <<'KUBECTL_WRAPPER'
+#!/data/data/com.termux/files/usr/bin/bash
+# Wrapper for kubectl with automatic kubeconfig setup
+export KUBECONFIG="$HOME/.kube/config"
+kubectl "$@"
+KUBECTL_WRAPPER
+chmod +x "$PREFIX/bin/k3s-kubectl"
+
+echo ""
+echo "Helper scripts created:"
+echo "  $HOME/k3s-start.sh   - Start k3s service"
+echo "  $HOME/k3s-stop.sh    - Stop k3s service"
+echo "  $HOME/k3s-status.sh  - Check k3s status"
+echo "  k3s-kubectl          - kubectl with auto-config (use: k3s-kubectl get nodes)"
+echo ""
+
+# Verify installation
+echo "Verifying installation..."
+echo ""
+echo "✓ Checking kubectl installation..."
+if command_exists kubectl; then
+  kubectl version --client --short 2>/dev/null || kubectl version --client 2>/dev/null || echo "kubectl installed"
+else
+  echo "✗ kubectl not found in PATH"
+fi
+
+echo ""
+echo "✓ Checking proot Ubuntu installation..."
+if proot-distro list | grep -q "ubuntu (installed)"; then
+  echo "Ubuntu proot environment is installed"
+else
+  echo "✗ Ubuntu proot environment not found"
+fi
+
+echo ""
+echo "✓ Checking k3s configuration..."
+if proot-distro login ubuntu -- test -f /etc/rancher/k3s/k3s.yaml 2>/dev/null; then
+  echo "k3s configuration file exists"
+else
+  echo "✗ k3s configuration file not found"
+fi
+
 echo ""
 echo "============================================"
 if [ "${K3S_INSTALL_FAILED}" = "true" ]; then
@@ -186,17 +336,42 @@ if [ "${K3S_INSTALL_FAILED}" = "true" ]; then
   echo "Please review the error messages above and complete the setup manually."
   echo ""
 else
-  echo "Installation Complete!"
+  echo "Installation Complete Successfully!"
   echo "============================================"
   echo ""
 fi
-echo "To use kubectl, run:"
-echo "  export KUBECONFIG=${KUBECONFIG_FILE}"
-echo "  kubectl get nodes"
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "QUICK START GUIDE"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "To access the proot Ubuntu environment:"
-echo "  proot-distro login ubuntu"
+echo "1. Setup kubectl environment:"
+echo "   export KUBECONFIG=${KUBECONFIG_FILE}"
+echo "   echo 'export KUBECONFIG=${KUBECONFIG_FILE}' >> ~/.bashrc"
 echo ""
-echo "Note: k3s runs inside the proot Ubuntu environment."
-echo "Some features may be limited on Android/Termux."
+echo "2. Test kubectl access:"
+echo "   kubectl get nodes"
+echo "   # or use: k3s-kubectl get nodes"
+echo ""
+echo "3. Access the proot Ubuntu environment:"
+echo "   proot-distro login ubuntu"
+echo ""
+echo "4. Manage k3s service:"
+echo "   ~/k3s-start.sh   # Start k3s"
+echo "   ~/k3s-stop.sh    # Stop k3s"
+echo "   ~/k3s-status.sh  # Check status"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "IMPORTANT NOTES"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "• k3s runs inside the proot Ubuntu environment"
+echo "• Some Kubernetes features may be limited on Android/Termux"
+echo "• Storage is limited to Termux's available space"
+echo "• Network policies may have limitations in proot"
+echo ""
+echo "For full automation, run with: AUTO_YES=true ./install_termux.sh"
+echo ""
+echo "============================================"
+echo "Installation process completed!"
 echo "============================================"

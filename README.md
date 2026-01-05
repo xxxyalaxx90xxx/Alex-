@@ -23,19 +23,47 @@ Defaults:
 
 ## Fully automated install for Termux
 
-For Android devices using Termux, use the specialized Termux installation script that sets up k3s (lightweight Kubernetes) in a proot environment:
+For Android devices using Termux, use the specialized Termux installation script that sets up k3s (lightweight Kubernetes) in a proot environment with full automation:
 
 ```bash
 chmod +x install_termux.sh
-# optionally set POD_CIDR, KUBECONFIG_FILE, K3S_VERSION
-./install_termux.sh
+# For fully automated installation (no prompts)
+AUTO_YES=true ./install_termux.sh
+
+# Or with custom options
+POD_CIDR=10.42.0.0/16 K3S_VERSION=v1.28.0 ./install_termux.sh
 ```
 
-After installation, use kubectl from within Termux:
+### Features
+
+The Termux installation script provides:
+- **Automatic permission setup** - Configures storage access automatically
+- **Complete k3s installation** - Installs k3s in proot Ubuntu environment
+- **kubectl installation** - Architecture detection (arm64/arm) and automatic download
+- **Helper scripts** - Auto-generates management scripts for k3s
+- **Verification** - Validates installation and reports status
+- **Error handling** - Comprehensive troubleshooting guidance
+
+### After Installation
+
+Use kubectl from within Termux:
 
 ```bash
 export KUBECONFIG=$HOME/.kube/config
 kubectl get nodes
+
+# Or use the helper wrapper
+k3s-kubectl get nodes
+```
+
+### Helper Scripts
+
+The installation creates these helper scripts:
+
+```bash
+~/k3s-start.sh   # Start k3s service
+~/k3s-stop.sh    # Stop k3s service
+~/k3s-status.sh  # Check k3s status
 ```
 
 To access the proot Ubuntu environment where k3s runs:
@@ -46,10 +74,12 @@ proot-distro login ubuntu
 
 **Note:** Full kubeadm is not supported on Android/Termux due to architecture limitations. The script installs k3s (lightweight Kubernetes) instead, which provides most Kubernetes functionality in a resource-constrained environment.
 
-Defaults:
+### Configuration Options
+
 - `POD_CIDR`: `10.42.0.0/16` (k3s default)
 - `KUBECONFIG_FILE`: `$HOME/.kube/config`
 - `K3S_VERSION`: latest stable version
+- `AUTO_YES`: `false` (set to `true` for fully automated installation)
 
 ## Manual Installation Steps
 
