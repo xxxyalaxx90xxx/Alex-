@@ -91,6 +91,10 @@ cat /tmp/k3s_install_inner.sh | proot-distro login ubuntu -- tee /tmp/k3s_instal
 proot-distro login ubuntu -- chmod +x /tmp/k3s_install_inner.sh
 if ! proot-distro login ubuntu -- /tmp/k3s_install_inner.sh; then
   echo "Warning: k3s installation in proot encountered issues." >&2
+  echo "Troubleshooting steps:" >&2
+  echo "  1. Check if proot-distro is working: proot-distro list" >&2
+  echo "  2. Verify network connectivity: curl -I https://get.k3s.io" >&2
+  echo "  3. Try manual installation: proot-distro login ubuntu" >&2
   echo "You may need to manually complete the setup." >&2
 fi
 
@@ -105,6 +109,10 @@ if ! command_exists kubectl; then
   
   if [ -z "${KUBECTL_VERSION}" ]; then
     echo "Error: Failed to retrieve kubectl version" >&2
+    echo "This could be due to:" >&2
+    echo "  - Network connectivity issues" >&2
+    echo "  - Kubernetes download server unavailable" >&2
+    echo "Please check your internet connection and try again." >&2
     exit 1
   fi
   
@@ -143,10 +151,12 @@ mkdir -p "$(dirname "${KUBECONFIG_FILE}")"
 
 # Try to copy kubeconfig from proot environment
 if proot-distro login ubuntu -- test -f /etc/rancher/k3s/k3s.yaml 2>/dev/null; then
-  # Copy kubeconfig to Termux environment
+  # Copy kubeconfig to Termux environment with secure permissions
   KUBECONFIG_TMP=$(mktemp)
+  chmod 600 "${KUBECONFIG_TMP}"
   if proot-distro login ubuntu -- cat /etc/rancher/k3s/k3s.yaml > "${KUBECONFIG_TMP}" 2>/dev/null; then
     mv "${KUBECONFIG_TMP}" "${KUBECONFIG_FILE}"
+    chmod 600 "${KUBECONFIG_FILE}"
     echo "Kubeconfig copied to ${KUBECONFIG_FILE}"
   else
     echo "Warning: Failed to read k3s.yaml from proot environment." >&2
