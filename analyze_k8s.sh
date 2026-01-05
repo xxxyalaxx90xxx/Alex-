@@ -162,11 +162,15 @@ echo "=== Analysis Summary ===" | tee -a "${OUTPUT_FILE}"
 echo "" | tee -a "${OUTPUT_FILE}"
 
 # Generate summary
-TOTAL_NODES=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
-READY_NODES=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready" || echo 0)
-TOTAL_PODS=$(kubectl get pods --all-namespaces --no-headers 2>/dev/null | wc -l)
-RUNNING_PODS=$(kubectl get pods --all-namespaces --no-headers 2>/dev/null | grep -c "Running" || echo 0)
-TOTAL_NAMESPACES=$(kubectl get namespaces --no-headers 2>/dev/null | wc -l)
+NODES_OUTPUT=$(kubectl get nodes --no-headers 2>/dev/null)
+PODS_OUTPUT=$(kubectl get pods --all-namespaces --no-headers 2>/dev/null)
+NAMESPACES_OUTPUT=$(kubectl get namespaces --no-headers 2>/dev/null)
+
+TOTAL_NODES=$(echo "${NODES_OUTPUT}" | wc -l)
+READY_NODES=$(echo "${NODES_OUTPUT}" | awk '$2 == "Ready" {count++} END {print count+0}')
+TOTAL_PODS=$(echo "${PODS_OUTPUT}" | wc -l)
+RUNNING_PODS=$(echo "${PODS_OUTPUT}" | awk '$4 == "Running" {count++} END {print count+0}')
+TOTAL_NAMESPACES=$(echo "${NAMESPACES_OUTPUT}" | wc -l)
 
 echo "Summary Statistics:" | tee -a "${OUTPUT_FILE}"
 echo "  Total Nodes: ${TOTAL_NODES}" | tee -a "${OUTPUT_FILE}"
@@ -177,17 +181,31 @@ echo "  Total Namespaces: ${TOTAL_NAMESPACES}" | tee -a "${OUTPUT_FILE}"
 echo "" | tee -a "${OUTPUT_FILE}"
 
 # Health assessment
-if [ "${READY_NODES}" -eq "${TOTAL_NODES}" ] && [ "${RUNNING_PODS}" -eq "${TOTAL_PODS}" ]; then
+NODES_HEALTHY=false
+PODS_HEALTHY=false
+
+if [ "${READY_NODES}" -eq "${TOTAL_NODES}" ] && [ "${TOTAL_NODES}" -gt 0 ]; then
+  NODES_HEALTHY=true
+fi
+
+if [ "${RUNNING_PODS}" -eq "${TOTAL_PODS}" ] && [ "${TOTAL_PODS}" -gt 0 ]; then
+  PODS_HEALTHY=true
+fi
+
+if [ "${NODES_HEALTHY}" = true ] && [ "${PODS_HEALTHY}" = true ]; then
   echo "Cluster Health: HEALTHY ✓" | tee -a "${OUTPUT_FILE}"
   echo "All nodes are ready and all pods are running." | tee -a "${OUTPUT_FILE}"
-elif [ "${READY_NODES}" -lt "${TOTAL_NODES}" ]; then
-  echo "Cluster Health: WARNING ⚠" | tee -a "${OUTPUT_FILE}"
-  echo "Not all nodes are ready. Please investigate node issues." | tee -a "${OUTPUT_FILE}"
-elif [ "${RUNNING_PODS}" -lt "${TOTAL_PODS}" ]; then
-  echo "Cluster Health: WARNING ⚠" | tee -a "${OUTPUT_FILE}"
-  echo "Not all pods are running. Please investigate pod issues." | tee -a "${OUTPUT_FILE}"
 else
-  echo "Cluster Health: UNKNOWN" | tee -a "${OUTPUT_FILE}"
+  echo "Cluster Health: WARNING ⚠" | tee -a "${OUTPUT_FILE}"
+  if [ "${NODES_HEALTHY}" = false ] && [ "${TOTAL_NODES}" -gt 0 ]; then
+    echo "Not all nodes are ready. Please investigate node issues." | tee -a "${OUTPUT_FILE}"
+  fi
+  if [ "${PODS_HEALTHY}" = false ] && [ "${TOTAL_PODS}" -gt 0 ]; then
+    echo "Not all pods are running. Please investigate pod issues." | tee -a "${OUTPUT_FILE}"
+  fi
+  if [ "${TOTAL_NODES}" -eq 0 ] || [ "${TOTAL_PODS}" -eq 0 ]; then
+    echo "No nodes or pods found in the cluster." | tee -a "${OUTPUT_FILE}"
+  fi
 fi
 
 echo "" | tee -a "${OUTPUT_FILE}"
