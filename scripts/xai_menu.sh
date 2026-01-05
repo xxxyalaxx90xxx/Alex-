@@ -71,16 +71,27 @@ show_main_menu() {
     
     echo -e "${WHITE}${BOLD}Hauptmenü:${NC}"
     echo
+    echo -e "${CYAN}━━━ System & Wartung ━━━${NC}"
     echo -e "  ${GREEN}1)${NC} System-Check ausführen"
     echo -e "  ${GREEN}2)${NC} System optimieren"
     echo -e "  ${GREEN}3)${NC} Backup erstellen"
     echo -e "  ${GREEN}4)${NC} Backup wiederherstellen"
+    echo
+    echo -e "${CYAN}━━━ Monitoring & Security ━━━${NC}"
     echo -e "  ${GREEN}5)${NC} Performance-Monitor"
     echo -e "  ${GREEN}6)${NC} Security-Check"
-    echo -e "  ${GREEN}7)${NC} Emulator-Setup"
-    echo -e "  ${GREEN}8)${NC} Dashboard starten"
-    echo -e "  ${GREEN}9)${NC} Logs anzeigen"
-    echo -e "  ${YELLOW}10)${NC} Einstellungen"
+    echo -e "  ${GREEN}7)${NC} Storage-Optimizer"
+    echo -e "  ${GREEN}8)${NC} System-Doctor"
+    echo
+    echo -e "${CYAN}━━━ Erweiterte Features ━━━${NC}"
+    echo -e "  ${MAGENTA}9)${NC} Emulator-Installation"
+    echo -e "  ${MAGENTA}10)${NC} VPN-Manager"
+    echo -e "  ${MAGENTA}11)${NC} Tor-Integration"
+    echo
+    echo -e "${CYAN}━━━ Dashboard & Sonstiges ━━━${NC}"
+    echo -e "  ${YELLOW}12)${NC} Dashboard starten"
+    echo -e "  ${YELLOW}13)${NC} Logs anzeigen"
+    echo -e "  ${YELLOW}14)${NC} Einstellungen"
     echo
     echo -e "  ${RED}0)${NC} Beenden"
     echo
@@ -376,6 +387,86 @@ menu_settings() {
     read -p "Drücke Enter zum Fortfahren..."
 }
 
+# Storage optimizer menu
+menu_storage_optimizer() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Storage-Optimizer ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/storage_optimizer.sh" ]]; then
+        bash "$SCRIPT_DIR/storage_optimizer.sh"
+    else
+        echo -e "${RED}Error: storage_optimizer.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# System doctor menu
+menu_system_doctor() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ System-Doctor ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/system_doctor.sh" ]]; then
+        bash "$SCRIPT_DIR/system_doctor.sh"
+    else
+        echo -e "${RED}Error: system_doctor.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Emulator installer menu
+menu_emulator_installer() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Emulator-Installation ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/emulator_installer.sh" ]]; then
+        bash "$SCRIPT_DIR/emulator_installer.sh"
+    else
+        echo -e "${RED}Error: emulator_installer.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# VPN manager menu
+menu_vpn_manager() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ VPN-Manager ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/vpn_manager.sh" ]]; then
+        bash "$SCRIPT_DIR/vpn_manager.sh"
+    else
+        echo -e "${RED}Error: vpn_manager.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Tor integration menu
+menu_tor_integration() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Tor-Integration ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/tor_integration.sh" ]]; then
+        bash "$SCRIPT_DIR/tor_integration.sh"
+    else
+        echo -e "${RED}Error: tor_integration.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
 # Main loop
 main() {
     while true; do
@@ -389,10 +480,14 @@ main() {
             4) menu_restore ;;
             5) menu_performance ;;
             6) menu_security ;;
-            7) menu_emulator ;;
-            8) menu_dashboard ;;
-            9) menu_logs ;;
-            10) menu_settings ;;
+            7) menu_storage_optimizer ;;
+            8) menu_system_doctor ;;
+            9) menu_emulator_installer ;;
+            10) menu_vpn_manager ;;
+            11) menu_tor_integration ;;
+            12) menu_dashboard ;;
+            13) menu_logs ;;
+            14) menu_settings ;;
             0)
                 clear_screen
                 echo -e "${GREEN}Auf Wiedersehen!${NC}"
