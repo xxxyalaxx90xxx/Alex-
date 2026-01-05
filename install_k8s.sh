@@ -51,9 +51,15 @@ retry_command() {
 # Validation functions
 validate_ip_address() {
   local ip="$1"
-  if [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+  # Check for valid IP format and reject leading zeros
+  if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
     IFS='.' read -ra OCTETS <<< "$ip"
     for octet in "${OCTETS[@]}"; do
+      # Check for leading zeros (except for just "0")
+      if [[ "${#octet}" -gt 1 && "${octet:0:1}" == "0" ]]; then
+        return 1
+      fi
+      # Check octet is in valid range
       if [ "$octet" -gt 255 ]; then
         return 1
       fi
@@ -65,7 +71,18 @@ validate_ip_address() {
 
 validate_cidr() {
   local cidr="$1"
-  if [[ "$cidr" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$ ]]; then
+  if [[ "$cidr" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]{1,2})$ ]]; then
+    # Extract IP and prefix
+    local ip="${cidr%/*}"
+    local prefix="${cidr#*/}"
+    # Validate IP part
+    if ! validate_ip_address "$ip"; then
+      return 1
+    fi
+    # Validate prefix length (0-32)
+    if [ "$prefix" -gt 32 ]; then
+      return 1
+    fi
     return 0
   fi
   return 1
@@ -179,9 +196,12 @@ if [ ! -f /etc/containerd/config.toml ]; then
   log_info "Generating default containerd configuration..."
   $SUDO_CMD containerd config default | $SUDO_CMD tee /etc/containerd/config.toml >/dev/null
 fi
-if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]' /etc/containerd/config.toml; then
+# Define pattern for better maintainability
+CRI_DISABLED_PATTERN='^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]'
+CRI_DISABLED_REPLACEMENT='# disabled_plugins = ["cri"]'
+if $SUDO_CMD grep -Eq "${CRI_DISABLED_PATTERN}" /etc/containerd/config.toml; then
   log_info "Enabling CRI plugin in containerd..."
-  $SUDO_CMD sed -i -E 's/^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]/# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
+  $SUDO_CMD sed -i -E "s/${CRI_DISABLED_PATTERN}/${CRI_DISABLED_REPLACEMENT}/g" /etc/containerd/config.toml
 fi
 $SUDO_CMD systemctl enable --now containerd
 $SUDO_CMD systemctl restart containerd
