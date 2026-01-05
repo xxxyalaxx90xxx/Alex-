@@ -66,9 +66,16 @@ detect_wsl() {
         exit 1
     fi
     
-    # Detect Windows username
+    # Detect Windows username (more reliable method)
     if [[ -d "/mnt/c/Users" ]]; then
-        WIN_USER=$(ls -t /mnt/c/Users | grep -v "Public\|Default" | head -1)
+        # Try to get Windows username from WSL environment
+        WIN_USER=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+        
+        # Fallback to directory listing if cmd.exe fails
+        if [[ -z "$WIN_USER" ]] || [[ "$WIN_USER" == "%USERNAME%" ]]; then
+            WIN_USER=$(ls -t /mnt/c/Users | grep -v "Public\|Default\|All Users" | head -1)
+        fi
+        
         log_info "Windows user: $WIN_USER"
     fi
 }

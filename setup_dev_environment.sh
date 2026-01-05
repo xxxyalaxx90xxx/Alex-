@@ -37,6 +37,8 @@ STAR="${CYAN}★${NC}"
 AUTHOR="Alexander Mathey"
 EMAIL="xyalaxxx90@gmail.com"
 COPYRIGHT="Elektronikx-Center-Matte ® ™ By Alexander Mathey ©"
+GRADLE_VERSION="${GRADLE_VERSION:-8.5}"
+ANDROID_SDK_VERSION="${ANDROID_SDK_VERSION:-9477386}"
 
 log() {
     echo -e "${1}"
@@ -276,10 +278,17 @@ install_android_sdk() {
     mkdir -p "$ANDROID_HOME/cmdline-tools"
     cd "$ANDROID_HOME/cmdline-tools"
     
-    local SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
+    local SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_VERSION}_latest.zip"
     
     log_info "Downloading Android SDK command line tools..."
     wget -q "$SDK_URL" -O cmdline-tools.zip
+    
+    # Verify download
+    if [[ ! -f cmdline-tools.zip ]] || [[ ! -s cmdline-tools.zip ]]; then
+        log_error "Failed to download Android SDK"
+        return 1
+    fi
+    
     unzip -q cmdline-tools.zip
     mv cmdline-tools latest
     rm cmdline-tools.zip
@@ -310,12 +319,18 @@ install_gradle() {
         return
     fi
     
-    local GRADLE_VERSION="8.5"
     local GRADLE_HOME="/opt/gradle"
     
     log_info "Installing Gradle $GRADLE_VERSION..."
     
+    # Download Gradle
     wget -q "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -O /tmp/gradle.zip
+    
+    # Verify download succeeded
+    if [[ ! -f /tmp/gradle.zip ]] || [[ ! -s /tmp/gradle.zip ]]; then
+        log_error "Failed to download Gradle"
+        return 1
+    fi
     
     mkdir -p "$GRADLE_HOME"
     unzip -q /tmp/gradle.zip -d "$GRADLE_HOME"
@@ -360,11 +375,15 @@ install_ai_ml_frameworks() {
         "pillow"
     )
     
-    log_info "Installing AI/ML Python packages..."
-    for pkg in "${AI_PACKAGES[@]}"; do
-        log_info "Installing: $pkg"
-        pip3 install "$pkg" 2>/dev/null || log_warn "Failed to install $pkg"
-    done
+    log_info "Installing AI/ML Python packages (batch mode for efficiency)..."
+    # Create requirements file for faster installation
+    local REQ_FILE="/tmp/ai_requirements.txt"
+    printf "%s\n" "${AI_PACKAGES[@]}" > "$REQ_FILE"
+    
+    # Batch install for better performance
+    pip3 install -r "$REQ_FILE" || log_warn "Some AI/ML packages failed to install"
+    
+    rm -f "$REQ_FILE"
     
     log_success "AI/ML frameworks installed"
 }

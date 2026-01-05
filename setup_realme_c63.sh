@@ -106,19 +106,23 @@ setup_termux_base() {
         return
     fi
     
-    # Update package lists
+    # Update package lists (use correct package manager)
     log_info "Updating package lists..."
-    pkg update -y || apt update -y
+    if command -v pkg &> /dev/null; then
+        pkg update -y && pkg upgrade -y
+    elif command -v apt &> /dev/null; then
+        apt update -y && apt upgrade -y
+    fi
     
-    # Upgrade existing packages
-    log_info "Upgrading packages..."
-    pkg upgrade -y || apt upgrade -y
-    
-    # Install base packages
+    # Install base packages (use correct package manager)
     log_info "Installing base packages..."
     for package in $TERMUX_PACKAGES_BASE; do
         log_info "Installing $package..."
-        pkg install -y "$package" 2>/dev/null || apt install -y "$package" 2>/dev/null || log_warn "Failed to install $package"
+        if command -v pkg &> /dev/null; then
+            pkg install -y "$package" 2>/dev/null || log_warn "Failed to install $package"
+        elif command -v apt &> /dev/null; then
+            apt install -y "$package" 2>/dev/null || log_warn "Failed to install $package"
+        fi
     done
     
     # Setup storage access
