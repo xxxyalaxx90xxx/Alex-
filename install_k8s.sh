@@ -79,8 +79,8 @@ validate_cidr() {
     if ! validate_ip_address "$ip"; then
       return 1
     fi
-    # Validate prefix length (0-32)
-    if [ "$prefix" -gt 32 ]; then
+    # Validate prefix is numeric and in range 0-32
+    if ! [[ "$prefix" =~ ^[0-9]+$ ]] || [ "$prefix" -gt 32 ]; then
       return 1
     fi
     return 0
@@ -196,7 +196,8 @@ if [ ! -f /etc/containerd/config.toml ]; then
   log_info "Generating default containerd configuration..."
   $SUDO_CMD containerd config default | $SUDO_CMD tee /etc/containerd/config.toml >/dev/null
 fi
-# Define pattern for better maintainability
+# Pattern to match: disabled_plugins = ["cri"] or disabled_plugins = ['cri']
+# This regex matches the line where CRI is explicitly disabled
 CRI_DISABLED_PATTERN='^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]'
 CRI_DISABLED_REPLACEMENT='# disabled_plugins = ["cri"]'
 if $SUDO_CMD grep -Eq "${CRI_DISABLED_PATTERN}" /etc/containerd/config.toml; then
@@ -327,17 +328,22 @@ fi
 log_info ""
 log_info "Verifying cluster health..."
 
-# Wait a moment for components to start
-sleep 5
+# Wait for components to start (configurable)
+STARTUP_WAIT_SECONDS=${STARTUP_WAIT_SECONDS:-5}
+sleep "$STARTUP_WAIT_SECONDS"
 
 # Check node status
 if command_exists kubectl; then
   log_info "Node status:"
-  kubectl --kubeconfig="${KUBECONFIG_FILE}" get nodes -o wide 2>/dev/null || log_error "Unable to get node status"
+  if ! kubectl --kubeconfig="${KUBECONFIG_FILE}" get nodes -o wide 2>&1; then
+    log_error "Unable to get node status - cluster may need more time to initialize"
+  fi
   
   log_info ""
   log_info "System pods status:"
-  kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces 2>/dev/null || log_error "Unable to get pods status"
+  if ! kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces 2>&1; then
+    log_error "Unable to get pods status - cluster may need more time to initialize"
+  fi
   
   log_info ""
   log_info "To use kubectl, run: export KUBECONFIG=${KUBECONFIG_FILE}"

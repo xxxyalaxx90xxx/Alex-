@@ -28,6 +28,7 @@ Defaults:
 - `KUBECONFIG_FILE`: `$HOME/.kube/config`
 - `MAX_RETRIES`: `3` (for network operations)
 - `RETRY_DELAY`: `5` seconds (delay between retries)
+- `STARTUP_WAIT_SECONDS`: `5` seconds (wait time for cluster components to start)
 
 ## Install kubelet
 
