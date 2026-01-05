@@ -198,12 +198,12 @@ Optionally, you can customize the MCP server behavior with additional environmen
 
 ### Environment Variables
 
-Core variables supported by the GitHub MCP Server:
+The GitHub MCP Server supports the following environment variables:
 
-- `GITHUB_PERSONAL_ACCESS_TOKEN` (required): Your GitHub PAT
-- `GITHUB_HOST` (optional): Custom GitHub host for Enterprise Server or GHE Cloud (default: `https://github.com`)
+- `GITHUB_PERSONAL_ACCESS_TOKEN` (required): Your GitHub Personal Access Token with appropriate permissions
+- `GITHUB_HOST` (optional): Custom GitHub hostname for Enterprise Server or GHE Cloud (default: `https://github.com`)
 
-Additional environment variables may be supported depending on your MCP server version. Consult the [GitHub MCP Server documentation](https://github.com/github/github-mcp-server) for the most current list of supported options.
+For the latest information on supported configuration options, refer to the [GitHub MCP Server repository](https://github.com/github/github-mcp-server).
 
 ### Advanced Configuration Example
 
