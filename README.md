@@ -13,8 +13,15 @@
 
 ## 🚀 Schnellstart
 
+**⚠️ Sicherheitshinweis**: Überprüfe Scripts vor der Ausführung!
+
 ```bash
-# Alles in einem Befehl installieren:
+# Empfohlen: Script herunterladen und überprüfen
+wget https://raw.githubusercontent.com/xxxyalaxx90xxx/Alex-/main/install.sh
+less install.sh  # Überprüfen
+bash install.sh
+
+# Alternative: Direkte Installation (nur wenn vertraut mit dem Script)
 curl -fsSL https://raw.githubusercontent.com/xxxyalaxx90xxx/Alex-/main/install.sh | bash
 ```
 

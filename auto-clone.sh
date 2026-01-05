@@ -31,7 +31,7 @@ if [ -z "$1" ]; then
     echo "Beispiele:"
     echo "  auto-clone.sh facebook/react"
     echo "  auto-clone.sh vuejs/vue main"
-    echo "  auto-clone.sh xxxyalaxx90xxx/Alex- copilot/optimize-performance-all-in-one"
+    echo "  auto-clone.sh xxxyalaxx90xxx/Alex-"
     exit 1
 fi
 

@@ -85,11 +85,12 @@ check_system() {
     fi
     
     # Speicherplatz
-    local free_space=$(df -h $HOME | awk 'NR==2 {print $4}' | sed 's/G//')
-    if (( $(echo "$free_space > 2" | bc -l) )); then
-        log_success "Ausreichend Speicherplatz verfügbar (${free_space}GB frei)"
+    local free_space=$(df -h $HOME | awk 'NR==2 {print $4}')
+    local free_space_mb=$(df -m $HOME | awk 'NR==2 {print $4}')
+    if [ "$free_space_mb" -gt 2048 ]; then
+        log_success "Ausreichend Speicherplatz verfügbar (${free_space} frei)"
     else
-        log_warning "Wenig Speicherplatz verfügbar (${free_space}GB frei)"
+        log_warning "Wenig Speicherplatz verfügbar (${free_space} frei)"
     fi
 }
 
@@ -198,9 +199,10 @@ setup_git() {
     
     # Prüfen ob bereits konfiguriert
     if ! git config --global user.name &> /dev/null; then
-        git config --global user.name "Alexander Mathey"
-        git config --global user.email "alexander.mathey@example.com"
-        log_info "Git-Benutzer gesetzt (kann mit 'git config --global' angepasst werden)"
+        log_info "Git-Benutzerkonfiguration wird übersprungen"
+        log_info "Bitte später konfigurieren mit:"
+        log_info "  git config --global user.name 'Dein Name'"
+        log_info "  git config --global user.email 'deine.email@example.com'"
     fi
     
     git config --global credential.helper store
@@ -219,14 +221,9 @@ setup_ssh() {
         mkdir -p $HOME/.ssh
         chmod 700 $HOME/.ssh
         
-        log_info "Generiere SSH-Key..."
-        ssh-keygen -t ed25519 -C "alexander.mathey@example.com" -f $HOME/.ssh/id_ed25519 -N ""
-        
-        log_success "SSH-Key generiert: $HOME/.ssh/id_ed25519.pub"
-        log_info "Füge den Public Key zu GitHub hinzu:"
-        echo ""
-        cat $HOME/.ssh/id_ed25519.pub
-        echo ""
+        log_info "SSH-Key wird übersprungen (generiere später manuell)"
+        log_info "Zum Generieren verwende:"
+        log_info "  ssh-keygen -t ed25519 -C 'deine.email@example.com'"
     else
         log_success "SSH-Key existiert bereits"
     fi
@@ -286,8 +283,8 @@ alias gc='git commit'
 alias ga='git add'
 alias glog='git log --oneline --graph --decorate'
 
-# Turbo-Mode
-alias turbo='renice -n -10 -p $$'
+# Turbo-Mode (konservativ für Stabilität)
+alias turbo='renice -n -5 -p $$'
 
 # Welcome Message
 echo -e "\033[0;36m"

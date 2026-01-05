@@ -86,8 +86,8 @@ show_system_info() {
 optimize_process_priority() {
     log_info "Optimiere Process-Priorität..."
     
-    # Nice-Level für aktuellen Shell-Prozess
-    renice -n -10 -p $$ &> /dev/null || log_warning "Konnte Priorität nicht ändern (benötigt evtl. root)"
+    # Nice-Level für aktuellen Shell-Prozess (konservativ)
+    renice -n -5 -p $$ &> /dev/null || log_warning "Konnte Priorität nicht ändern (benötigt evtl. root)"
     
     log_success "Process-Priorität optimiert"
 }
@@ -106,16 +106,23 @@ optimize_memory() {
         fi
     else
         log_warning "Kein Swap-File gefunden"
-        log_info "Erstelle Swap-File (2GB)..."
         
-        if command -v fallocate &> /dev/null; then
-            fallocate -l 2G "$HOME/swapfile" && \
-            chmod 600 "$HOME/swapfile" && \
-            mkswap "$HOME/swapfile" && \
-            swapon "$HOME/swapfile" && \
-            log_success "Swap-File erstellt und aktiviert" || log_warning "Swap-Erstellung fehlgeschlagen"
+        # Prüfe verfügbaren Speicherplatz
+        local free_space_mb=$(df -m $HOME | awk 'NR==2 {print $4}')
+        if [ "$free_space_mb" -gt 2048 ]; then
+            log_info "Erstelle Swap-File (2GB)..."
+            
+            if command -v fallocate &> /dev/null; then
+                fallocate -l 2G "$HOME/swapfile" && \
+                chmod 600 "$HOME/swapfile" && \
+                mkswap "$HOME/swapfile" && \
+                swapon "$HOME/swapfile" && \
+                log_success "Swap-File erstellt und aktiviert" || log_warning "Swap-Erstellung fehlgeschlagen"
+            else
+                log_warning "fallocate nicht verfügbar, überspringe Swap-Erstellung"
+            fi
         else
-            log_warning "fallocate nicht verfügbar, überspringe Swap-Erstellung"
+            log_warning "Nicht genug Speicherplatz für Swap-File (benötigt 2GB)"
         fi
     fi
     
@@ -226,15 +233,19 @@ run_performance_test() {
         echo -e "${CYAN}Verfügbarer RAM:${NC} ${AVAIL_MEM_MB}MB"
     fi
     
-    # Disk-Test (Write-Speed)
+    # Disk-Test (Write-Speed) - Test in Home-Verzeichnis für realistischere Ergebnisse
     log_info "Disk-Test..."
     TIME_START=$(date +%s%N)
-    dd if=/dev/zero of=/tmp/testfile bs=1M count=10 conv=fdatasync &> /dev/null
+    dd if=/dev/zero of=$HOME/testfile bs=1M count=10 conv=fdatasync &> /dev/null
     TIME_END=$(date +%s%N)
-    rm -f /tmp/testfile
+    rm -f $HOME/testfile
     DISK_TIME=$(( (TIME_END - TIME_START) / 1000000 ))
-    DISK_SPEED=$((10000 / DISK_TIME))
-    echo -e "${CYAN}Write-Speed:${NC} ${DISK_SPEED}MB/s"
+    if [ "$DISK_TIME" -gt 0 ]; then
+        DISK_SPEED=$((10000 / DISK_TIME))
+        echo -e "${CYAN}Write-Speed:${NC} ${DISK_SPEED}MB/s"
+    else
+        echo -e "${CYAN}Write-Speed:${NC} Sehr schnell (< 1ms für 10MB)"
+    fi
     
     # Netzwerk-Test
     log_info "Netzwerk-Test..."

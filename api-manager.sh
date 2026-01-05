@@ -74,6 +74,7 @@ setup_github() {
             echo "export GITHUB_TOKEN='$GITHUB_TOKEN'" > "$CONFIG_DIR/github"
             chmod 600 "$CONFIG_DIR/github"
             log_success "GitHub Token gespeichert"
+            log_warning "Token in Plain-Text gespeichert - schütze $CONFIG_DIR/github!"
         fi
     fi
 }
@@ -111,7 +112,6 @@ setup_pypi() {
     read -p "PyPI Token eingeben (oder Enter zum Überspringen): " PYPI_TOKEN
     
     if [ ! -z "$PYPI_TOKEN" ]; then
-        mkdir -p "$HOME/.pypirc"
         cat > "$HOME/.pypirc" << EOF
 [distutils]
 index-servers =
