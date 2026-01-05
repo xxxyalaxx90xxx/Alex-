@@ -1,5 +1,22 @@
 # Alex - Setup K8S by kubeadm
 
+## Termux All-in-One Auto-Installer
+
+One-click unattended setup for a Termux dev/VM/AI environment:
+
+```
+chmod +x installer.sh
+bash installer.sh --auto
+```
+
+What it does (zero prompts):
+- Detects RAM/CPU/storage/Android version and writes config to `~/.config/termux-auto/config.env`
+- Installs dev stacks: Python (with Flask dashboard), Node.js, Go, Rust, Java, tmux
+- Prepares AI dashboard (`ai-dashboard` alias) and backup/restore helpers
+- Prepares a Windows 10 VM profile (place your ISO at `~/storage/downloads/Win10.iso`, launch via `vm-win10`)
+
+Logs are written to `~/.cache/termux-auto-install/install.log`.
+
 ## Fully automated install
 
 Run the provided script to install kubeadm/kubelet/kubectl, enable containerd CRI, initialize the control plane, apply flannel, and optionally configure hugepages without manual edits:
