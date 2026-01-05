@@ -10,6 +10,7 @@ set -euo pipefail
 #   FLANNEL_MANIFEST_URL: URL for the flannel manifest (default pinned commit)
 #   FLANNEL_MANIFEST_SHA256: Expected SHA256 for the flannel manifest (leave empty to skip check)
 #   INSTALL_TRIVY:      Install Trivy security scanner (default: false, set to 'true' to enable)
+#   TRIVY_VERSION:      Trivy version to install (default: 0.58.1, only used if INSTALL_TRIVY=true)
 
 SUDO_CMD="sudo"
 if [ "${EUID:-$(id -u)}" -eq 0 ]; then
@@ -190,12 +191,27 @@ if [ "${INSTALL_TRIVY}" = "true" ]; then
   trap cleanup_trivy EXIT
   
   if command_exists curl; then
-    curl -L --fail "${TRIVY_URL}" -o "${trivy_tmp}/trivy.tar.gz"
+    curl -L --fail "${TRIVY_URL}" -o "${trivy_tmp}/trivy.tar.gz" || {
+      echo "Failed to download Trivy from ${TRIVY_URL}" >&2
+      exit 1
+    }
   else
-    wget -O "${trivy_tmp}/trivy.tar.gz" "${TRIVY_URL}"
+    wget -O "${trivy_tmp}/trivy.tar.gz" "${TRIVY_URL}" || {
+      echo "Failed to download Trivy from ${TRIVY_URL}" >&2
+      exit 1
+    }
   fi
   
-  tar -xzf "${trivy_tmp}/trivy.tar.gz" -C "${trivy_tmp}"
+  tar -xzf "${trivy_tmp}/trivy.tar.gz" -C "${trivy_tmp}" || {
+    echo "Failed to extract Trivy archive" >&2
+    exit 1
+  }
+  
+  if [ ! -f "${trivy_tmp}/trivy" ]; then
+    echo "Trivy binary not found in archive. Archive may be corrupted or structure changed." >&2
+    exit 1
+  fi
+  
   $SUDO_CMD mv "${trivy_tmp}/trivy" /usr/local/bin/trivy
   $SUDO_CMD chmod +x /usr/local/bin/trivy
   trap - EXIT
