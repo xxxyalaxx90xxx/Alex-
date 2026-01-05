@@ -99,10 +99,16 @@ show_main_menu() {
     echo -e "  ${YELLOW}17)${NC} Container Manager"
     echo -e "  ${YELLOW}18)${NC} Automation Suite"
     echo
+    echo -e "${CYAN}━━━ Enterprise Tools ━━━${NC}"
+    echo -e "  ${MAGENTA}19)${NC} Database Manager"
+    echo -e "  ${MAGENTA}20)${NC} Network Manager"
+    echo -e "  ${MAGENTA}21)${NC} Dashboard API Server"
+    echo -e "  ${MAGENTA}22)${NC} Plugin System"
+    echo
     echo -e "${CYAN}━━━ Dashboard & Sonstiges ━━━${NC}"
-    echo -e "  ${YELLOW}19)${NC} Dashboard starten"
-    echo -e "  ${YELLOW}20)${NC} Logs anzeigen"
-    echo -e "  ${YELLOW}21)${NC} Einstellungen"
+    echo -e "  ${YELLOW}23)${NC} Dashboard starten"
+    echo -e "  ${YELLOW}24)${NC} Logs anzeigen"
+    echo -e "  ${YELLOW}25)${NC} Einstellungen"
     echo
     echo -e "  ${RED}0)${NC} Beenden"
     echo
@@ -590,6 +596,70 @@ menu_automation_suite() {
     read -p "Drücke Enter zum Fortfahren..."
 }
 
+# Database manager menu
+menu_database_manager() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Database Manager ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/database_manager.sh" ]]; then
+        bash "$SCRIPT_DIR/database_manager.sh"
+    else
+        echo -e "${RED}Error: database_manager.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Network manager menu
+menu_network_manager() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Network Manager ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/network_manager.sh" ]]; then
+        bash "$SCRIPT_DIR/network_manager.sh"
+    else
+        echo -e "${RED}Error: network_manager.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Dashboard API menu
+menu_dashboard_api() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Dashboard API Server ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/dashboard_api.sh" ]]; then
+        bash "$SCRIPT_DIR/dashboard_api.sh"
+    else
+        echo -e "${RED}Error: dashboard_api.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
+# Plugin system menu
+menu_plugin_system() {
+    clear_screen
+    echo -e "${CYAN}${BOLD}═══ Plugin System ═══${NC}"
+    echo
+    
+    if [[ -f "$SCRIPT_DIR/plugin_system.sh" ]]; then
+        bash "$SCRIPT_DIR/plugin_system.sh"
+    else
+        echo -e "${RED}Error: plugin_system.sh nicht gefunden${NC}"
+    fi
+    
+    echo
+    read -p "Drücke Enter zum Fortfahren..."
+}
+
 # Main loop
 main() {
     while true; do
@@ -615,9 +685,13 @@ main() {
             16) menu_cloud_integrator ;;
             17) menu_container_manager ;;
             18) menu_automation_suite ;;
-            19) menu_dashboard ;;
-            20) menu_logs ;;
-            21) menu_settings ;;
+            19) menu_database_manager ;;
+            20) menu_network_manager ;;
+            21) menu_dashboard_api ;;
+            22) menu_plugin_system ;;
+            23) menu_dashboard ;;
+            24) menu_logs ;;
+            25) menu_settings ;;
             0)
                 clear_screen
                 echo -e "${GREEN}Auf Wiedersehen!${NC}"
