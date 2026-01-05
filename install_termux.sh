@@ -89,7 +89,10 @@ trap cleanup_k3s_script EXIT
 proot-distro login ubuntu -- mkdir -p /tmp 2>/dev/null || true
 cat /tmp/k3s_install_inner.sh | proot-distro login ubuntu -- tee /tmp/k3s_install_inner.sh >/dev/null
 proot-distro login ubuntu -- chmod +x /tmp/k3s_install_inner.sh
+
+K3S_INSTALL_FAILED=false
 if ! proot-distro login ubuntu -- /tmp/k3s_install_inner.sh; then
+  K3S_INSTALL_FAILED=true
   echo "Warning: k3s installation in proot encountered issues." >&2
   echo "Troubleshooting steps:" >&2
   echo "  1. Check if proot-distro is working: proot-distro list" >&2
@@ -173,9 +176,20 @@ chmod 600 "${KUBECONFIG_FILE}" 2>/dev/null || true
 
 echo ""
 echo "============================================"
-echo "Installation Complete!"
-echo "============================================"
-echo ""
+if [ "${K3S_INSTALL_FAILED}" = "true" ]; then
+  echo "Installation Completed with Warnings"
+  echo "============================================"
+  echo ""
+  echo "NOTE: k3s installation encountered issues."
+  echo "Some functionality may not work until k3s is properly installed."
+  echo ""
+  echo "Please review the error messages above and complete the setup manually."
+  echo ""
+else
+  echo "Installation Complete!"
+  echo "============================================"
+  echo ""
+fi
 echo "To use kubectl, run:"
 echo "  export KUBECONFIG=${KUBECONFIG_FILE}"
 echo "  kubectl get nodes"
