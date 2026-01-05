@@ -1,4 +1,4 @@
-# Alex-# Setup K8S by kubeadm
+# Alex - Setup K8S by kubeadm
 
 ## Fully automated install
 
@@ -22,18 +22,17 @@ Defaults:
 cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-exclude=kubelet kubeadm kubectl
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repomd.xml.key
 EOF
 
 # Set SELinux in permissive mode (effectively disabling it)
 sudo setenforce 0
 sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
-sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+sudo yum install -y kubelet kubeadm kubectl
 
 sudo systemctl enable --now kubelet
 ```
@@ -55,10 +54,10 @@ sudo kubeadm init --ignore-preflight-errors Swap --apiserver-advertise-address=1
 # follow instructions to copy kubeconfig file to $HOME/.kube/config
 
 
-kubectl create -f https://raw.githubusercontent.com/coreos/flannel/v0.22.0/Documentation/kube-flannel.yml
+kubectl create -f https://raw.githubusercontent.com/flannel-io/flannel/629cd70d816e56853aac967f92ed3dade7275baf/Documentation/kube-flannel.yml
 
 or
-https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+https://raw.githubusercontent.com/flannel-io/flannel/629cd70d816e56853aac967f92ed3dade7275baf/Documentation/kube-flannel.yml
 ```
 
 ## Setup Hugepage
@@ -69,7 +68,7 @@ sudo bash -c "echo 256 > /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages"
 # restart kubelet
 sudo systemctl restart kubelet
 
-# check if kubelet has recognized huagepage
+# check if kubelet has recognized hugepage
 kubectl get nodes -oyaml | grep hugepages-2Mi
 ```
 
