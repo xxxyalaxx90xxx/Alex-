@@ -130,4 +130,6 @@ The analysis provides:
 - Detailed information for troubleshooting
 - Resource utilization metrics (if metrics-server is installed)
 
+For more details on the analysis output and examples, see [ANALYSIS_EXAMPLE.md](ANALYSIS_EXAMPLE.md)
+
 Deepseek
