@@ -98,10 +98,12 @@ GITHUB_HOST="https://yourorg.ghe.com"
 
 #### Quick Installation
 
-For VS Code users, use one of these one-click install methods:
+For VS Code users, you can use one-click install buttons (if supported by your VS Code version):
 
 - **[Install with Docker in VS Code](vscode://github.copilot-mcp-server/install?name=github&image=ghcr.io/github/github-mcp-server)**
 - **[Install with Docker in VS Code Insiders](vscode-insiders://github.copilot-mcp-server/install?name=github&image=ghcr.io/github/github-mcp-server)**
+
+> **Note**: If the one-click install links don't work in your VS Code version, use the manual installation method below.
 
 Once you complete the installation flow:
 1. Toggle **Agent mode** (located by the Copilot Chat text input)
@@ -196,12 +198,16 @@ Optionally, you can customize the MCP server behavior with additional environmen
 
 ### Environment Variables
 
+Core variables supported by the GitHub MCP Server:
+
 - `GITHUB_PERSONAL_ACCESS_TOKEN` (required): Your GitHub PAT
-- `GITHUB_HOST` (optional): Custom GitHub host for Enterprise Server or GHE Cloud
-- `MCP_SERVER_PORT` (optional): Port for the MCP server to listen on
-- `MCP_LOG_LEVEL` (optional): Logging level (debug, info, warn, error)
+- `GITHUB_HOST` (optional): Custom GitHub host for Enterprise Server or GHE Cloud (default: `https://github.com`)
+
+Additional environment variables may be supported depending on your MCP server version. Consult the [GitHub MCP Server documentation](https://github.com/github/github-mcp-server) for the most current list of supported options.
 
 ### Advanced Configuration Example
+
+Example showing GitHub Enterprise Server configuration:
 
 ```json
 {
@@ -225,14 +231,11 @@ Optionally, you can customize the MCP server behavior with additional environmen
           "GITHUB_PERSONAL_ACCESS_TOKEN",
           "-e",
           "GITHUB_HOST",
-          "-e",
-          "MCP_LOG_LEVEL",
           "ghcr.io/github/github-mcp-server"
         ],
         "env": {
           "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_token}",
-          "GITHUB_HOST": "https://github.com",
-          "MCP_LOG_LEVEL": "info"
+          "GITHUB_HOST": "https://github.yourcompany.com"
         }
       }
     }
@@ -288,7 +291,9 @@ docker pull ghcr.io/github/github-mcp-server
 4. Ensure no port conflicts exist
 5. Try running the Docker command manually to see detailed errors:
    ```bash
-   docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN="your_token" ghcr.io/github/github-mcp-server
+   # Set your token in an environment variable first (won't be logged in history)
+   export GITHUB_PERSONAL_ACCESS_TOKEN="your_token"
+   docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server
    ```
 
 ### Getting Help
