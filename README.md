@@ -20,16 +20,18 @@
 | **install_k8s_complete.sh** | Production installation | Preflight checks, logging, 8+ OS support, validation |
 | **install_k8s_optimized.sh** | Mobile/ARM installation | Auto-detection, K3s support, Realme C63 optimized |
 | **install_k8s.sh** | Legacy installation | Quick CentOS/RHEL setup |
-| **upgrade_k8s.sh** | ⭐ NEW: Version upgrades | K3s/kubeadm upgrade with backup |
+| **upgrade_k8s.sh** | Version upgrades | K3s/kubeadm upgrade with backup |
 | **validate_k8s.sh** | Testing & validation | 12 comprehensive tests, health checks |
 | **backup_k8s.sh** | Backup & restore | Full cluster backup, resource export |
 | **analyze_k8s.sh** | Cluster analysis | 11 analysis sections, health assessment |
-| **setup_monitoring.sh** | ⭐ NEW: Monitoring stack | Prometheus, Grafana, Metrics Server |
+| **setup_monitoring.sh** | Monitoring stack | Prometheus, Grafana, Metrics Server |
+| **optimize_performance.sh** | ⭐ NEW: Performance tuning | Device-specific optimizations |
+| **troubleshoot_k8s.sh** | ⭐ NEW: Auto troubleshoot | Detect & fix common issues |
 | **uninstall_k8s.sh** | Clean removal | Complete cleanup, CNI removal |
 
 ### 🔧 CI/CD Templates
-- **`.github/workflows/k8s-ci.yml`** ⭐ NEW - GitHub Actions workflow
-- **`gitlab-ci-template.yml`** ⭐ NEW - GitLab CI/CD template
+- **`.github/workflows/k8s-ci.yml`** - GitHub Actions workflow
+- **`gitlab-ci-template.yml`** - GitLab CI/CD template
 
 ## 🚀 Complete Installation System (NEWEST - v2.0)
 
@@ -531,9 +533,110 @@ pipeline {
 
 ---
 
+---
+
+## ⚡ Performance Optimization (NEW)
+
+Optimize your cluster for specific device types and use cases:
+
+```bash
+chmod +x optimize_performance.sh
+
+# Auto-detect device type and optimize
+sudo ./optimize_performance.sh
+
+# Optimize for specific device type
+DEVICE_TYPE=mobile sudo ./optimize_performance.sh
+DEVICE_TYPE=sbc sudo ./optimize_performance.sh
+DEVICE_TYPE=server sudo ./optimize_performance.sh
+```
+
+### Optimizations Applied
+
+**For Mobile Devices (Realme C63, etc.)**:
+- Limits max pods to 20
+- Disables unnecessary components (ServiceLB, Traefik)
+- Aggressive memory eviction (<100Mi available)
+- Frequent image garbage collection
+- Host-gateway network backend (lowest overhead)
+
+**For All Device Types**:
+- Kernel parameter tuning (network, memory)
+- Increased file limits
+- Docker/Containerd optimization
+- Reduced swap usage
+
+### Performance Tips by Device
+
+| Device Type | Max Recommended Pods | Resource Usage | Best For |
+|-------------|---------------------|----------------|----------|
+| Mobile | 10-20 | 400MB-800MB | Learning, testing |
+| SBC | 20-50 | 800MB-1.5GB | Edge computing, IoT |
+| Workstation | 50-100 | 1GB-2GB | Development |
+| Server | 100+ | 2GB-4GB | Production |
+
+---
+
+## 🔍 Automated Troubleshooting (NEW)
+
+Automatically detect and fix common Kubernetes issues:
+
+```bash
+chmod +x troubleshoot_k8s.sh
+
+# Diagnose issues
+./troubleshoot_k8s.sh
+
+# Diagnose and auto-fix issues
+AUTO_FIX=true sudo ./troubleshoot_k8s.sh
+```
+
+### Checks Performed
+
+1. ✓ kubectl availability
+2. ✓ Kubeconfig permissions  
+3. ✓ Cluster connectivity
+4. ✓ Node status (all Ready)
+5. ✓ Pod health (no CrashLoops)
+6. ✓ DNS functionality (CoreDNS)
+7. ✓ Disk space (<85% usage)
+8. ✓ Memory usage (<90% usage)
+
+### Auto-Fix Capabilities
+
+When `AUTO_FIX=true`:
+- Creates kubectl symlink from k3s
+- Fixes kubeconfig permissions (600)
+- Starts stopped services (k3s, kubelet)
+- Deletes and recreates failed pods
+- Prunes unused Docker/Containerd images
+- Restarts CoreDNS deployment
+- Creates missing kubeconfig from K3s
+
+### Example Output
+
+```
+✓ kubectl is available
+✓ Kubeconfig permissions are correct
+✓ Cluster is accessible
+✗ 1 node(s) not Ready
+  🔧 Restarting K3s service...
+  ✓ Node status improved
+✓ All pods are running
+✓ CoreDNS is running
+✓ Disk space is sufficient (45%)
+✓ Memory usage is acceptable (62%)
+
+Issues found: 1
+Issues fixed: 1
+```
+
+---
+
 ## 📚 Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
+- **[ADVANCED_GUIDE.md](ADVANCED_GUIDE.md)** ⭐ NEW - Performance tuning, troubleshooting, best practices
 - **[COMPLETE_INSTALLATION_GUIDE.md](COMPLETE_INSTALLATION_GUIDE.md)** - Comprehensive installation guide (12KB)
 - **[OPTIMIZED_INSTALLATION_GUIDE.md](OPTIMIZED_INSTALLATION_GUIDE.md)** - Mobile device guide (8KB)
 - **[ANALYSIS_EXAMPLE.md](ANALYSIS_EXAMPLE.md)** - Analysis output examples
