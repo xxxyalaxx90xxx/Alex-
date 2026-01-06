@@ -1,6 +1,10 @@
 # Local GitHub MCP Server
 
-Install with Docker in VS Code | Install with Docker in VS Code Insiders
+## Quick Installation Options
+
+- [Docker in VS Code](#install-in-github-copilot-on-vs-code)
+- [Docker in VS Code Insiders](#install-in-github-copilot-on-vs-code)
+- [Docker in Other IDEs](#install-in-github-copilot-on-other-ides-jetbrains-visual-studio-eclipse-etc)
 
 ## Overview
 
@@ -48,7 +52,9 @@ The flag `--gh-host` and the environment variable `GITHUB_HOST` can be used to s
 
 ### Install in GitHub Copilot on VS Code
 
-For quick installation, use one of the one-click install buttons above. Once you complete that flow, toggle Agent mode (located by the Copilot Chat text input) and the server will start.
+Once you have Docker installed and a GitHub Personal Access Token ready, you can configure the MCP server in VS Code.
+
+Toggle Agent mode (located by the Copilot Chat text input) and the server will start once configured.
 
 More about using MCP server tools in [VS Code's agent mode documentation](https://code.visualstudio.com/docs/copilot/copilot-chat).
 
@@ -82,7 +88,7 @@ Add the following JSON block to your VS Code MCP settings (typically in `.vscode
         ],
         "env": {
           "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_token}",
-          "GITHUB_HOST": "https://"
+          "GITHUB_HOST": "https://github.com"
         }
       }
     }
