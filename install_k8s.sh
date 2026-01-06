@@ -173,7 +173,9 @@ check_prerequisites() {
   fi
   
   # Check network connectivity
-  if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
+  # Using Google DNS 8.8.8.8 as a default, but can be overridden via CONNECTIVITY_CHECK_HOST
+  local check_host="${CONNECTIVITY_CHECK_HOST:-8.8.8.8}"
+  if ! ping -c 1 -W 2 "$check_host" >/dev/null 2>&1; then
     log_warn "No internet connectivity detected. Installation may fail."
   fi
   
@@ -303,6 +305,7 @@ $SUDO_CMD sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 log_success "SELinux set to permissive mode"
 
 log_info "[3/6] Install kubelet, kubeadm, kubectl"
+# SC2086: Word splitting is intentional for SUDO_CMD which may be empty, "sudo", or "echo [DRY-RUN] sudo"
 # shellcheck disable=SC2086
 if ! retry_command $SUDO_CMD yum install -y kubelet kubeadm kubectl; then
   log_error "Failed to install Kubernetes components"
@@ -314,6 +317,7 @@ log_success "Kubernetes components installed and kubelet enabled"
 log_info "[4/6] Ensure containerd has CRI enabled"
 if ! command_exists containerd; then
   log_info "Installing containerd..."
+  # SC2086: Word splitting is intentional for SUDO_CMD which may be empty, "sudo", or "echo [DRY-RUN] sudo"
   # shellcheck disable=SC2086
   if ! retry_command $SUDO_CMD yum install -y containerd; then
     log_error "Failed to install containerd"
@@ -328,7 +332,7 @@ else
   backup_file /etc/containerd/config.toml
 fi
 # Pattern to match: disabled_plugins = ["cri"] or disabled_plugins = ['cri']
-# This regex matches the line where CRI is explicitly disabled
+# Using \047 for single quote to avoid shell quoting issues in the pattern
 CRI_DISABLED_PATTERN='^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]'
 CRI_DISABLED_REPLACEMENT='# disabled_plugins = ["cri"]'
 if $SUDO_CMD grep -Eq "${CRI_DISABLED_PATTERN}" /etc/containerd/config.toml; then
@@ -364,7 +368,8 @@ if [ -n "${HUGEPAGES_2MI}" ]; then
   printf '%s\n' "${HUGEPAGES_2MI}" | $SUDO_CMD tee /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages >/dev/null
   # Verify hugepages were configured
   actual_hugepages=$($SUDO_CMD cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages 2>/dev/null || echo "0")
-  if [ "${actual_hugepages}" -eq "${HUGEPAGES_2MI}" ]; then
+  # Validate that actual_hugepages is numeric before comparison
+  if [[ "${actual_hugepages}" =~ ^[0-9]+$ ]] && [ "${actual_hugepages}" -eq "${HUGEPAGES_2MI}" ]; then
     log_success "Hugepages configured successfully: ${actual_hugepages} x 2Mi"
   else
     log_error "Failed to configure hugepages. Requested: ${HUGEPAGES_2MI}, Actual: ${actual_hugepages}"
@@ -493,9 +498,10 @@ run_health_checks() {
     if pods_output=$(kubectl --kubeconfig="${KUBECONFIG_FILE}" get pods --all-namespaces 2>&1); then
       echo "$pods_output"
       
-      # Count pending/failed pods
-      pending_count=$(echo "$pods_output" | awk '$4 == "Pending" {count++} END {print count+0}')
-      failed_count=$(echo "$pods_output" | awk '$4 ~ /^(Error|CrashLoopBackOff|Failed)$/ {count++} END {print count+0}')
+      # Count pending/failed pods using more robust column detection
+      # Look for STATUS column and count based on status values
+      pending_count=$(echo "$pods_output" | grep -c -E '[[:space:]]+Pending[[:space:]]*$' || echo "0")
+      failed_count=$(echo "$pods_output" | grep -c -E '[[:space:]]+(Error|CrashLoopBackOff|Failed)[[:space:]]*$' || echo "0")
       
       if [ "$pending_count" -gt 0 ]; then
         log_warn "${pending_count} pod(s) are in Pending state"
