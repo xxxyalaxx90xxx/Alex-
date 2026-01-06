@@ -96,8 +96,12 @@ success() {
 progress() {
     CURRENT_STEP=$((CURRENT_STEP + 1))
     local percent=$((CURRENT_STEP * 100 / TOTAL_STEPS))
-    local filled=$((percent / 3))
-    local empty=$((33 - filled))
+    
+    # Progress bar configuration
+    local BAR_LENGTH=33  # Total length of the progress bar
+    local BAR_SCALE=3    # Scale factor: 100% / BAR_SCALE = bar length
+    local filled=$((percent / BAR_SCALE))
+    local empty=$((BAR_LENGTH - filled))
     
     echo ""
     echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"

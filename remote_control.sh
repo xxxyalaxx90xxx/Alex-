@@ -324,9 +324,10 @@ generate_bar() {
     
     # Color based on percentage
     local color="${GREEN}"
-    if (( $(echo "$value > 80" | bc -l 2>/dev/null || echo 0) )); then
+    local value_int=$(printf "%.0f" "$value")
+    if [ "$value_int" -gt 80 ]; then
         color="${RED}"
-    elif (( $(echo "$value > 60" | bc -l 2>/dev/null || echo 0) )); then
+    elif [ "$value_int" -gt 60 ]; then
         color="${YELLOW}"
     fi
     
@@ -386,7 +387,7 @@ open_web_dashboard() {
     read
 }
 
-// System Info
+# System Info
 show_system_info() {
     clear
     echo -e "${CYAN}"

@@ -218,15 +218,17 @@ show_status() {
         local conns=$(grep "^system_network_connections" "$METRICS_FILE" | awk '{print $2}')
         local timestamp=$(grep "^timestamp" "$METRICS_FILE" | cut -d' ' -f2-)
         
-        # Display with color coding
+        # Display with color coding (using integer comparison)
         local cpu_color="${GREEN}"
-        [[ $(echo "$cpu > $CPU_THRESHOLD" | bc -l 2>/dev/null || echo 0) -eq 1 ]] && cpu_color="${RED}"
+        local cpu_int=$(printf "%.0f" "$cpu" 2>/dev/null || echo 0)
+        [ "$cpu_int" -gt "$CPU_THRESHOLD" ] && cpu_color="${RED}"
         
         local mem_color="${GREEN}"
-        [[ $(echo "$mem > $MEMORY_THRESHOLD" | bc -l 2>/dev/null || echo 0) -eq 1 ]] && mem_color="${RED}"
+        local mem_int=$(printf "%.0f" "$mem" 2>/dev/null || echo 0)
+        [ "$mem_int" -gt "$MEMORY_THRESHOLD" ] && mem_color="${RED}"
         
         local disk_color="${GREEN}"
-        [[ "$disk" -gt "$DISK_THRESHOLD" ]] && disk_color="${RED}"
+        [ "$disk" -gt "$DISK_THRESHOLD" ] && disk_color="${RED}"
         
         echo -e "  CPU Usage:     ${cpu_color}${cpu}%${NC} (threshold: ${CPU_THRESHOLD}%)"
         echo -e "  Memory Usage:  ${mem_color}${mem}%${NC} (threshold: ${MEMORY_THRESHOLD}%)"
@@ -276,10 +278,16 @@ show_metrics() {
         local filled=$(awk "BEGIN {printf \"%.0f\", ($value/100)*$bar_length}")
         local empty=$((bar_length - filled))
         
-        # Color based on threshold
+        # Color based on threshold (using integer comparison for better portability)
         local color="${GREEN}"
-        [[ $(echo "$value > $threshold" | bc -l 2>/dev/null || echo 0) -eq 1 ]] && color="${RED}"
-        [[ $(echo "$value > ($threshold - 10)" | bc -l 2>/dev/null || echo 0) -eq 1 ]] && [[ $(echo "$value <= $threshold" | bc -l 2>/dev/null || echo 0) -eq 1 ]] && color="${YELLOW}"
+        local value_int=$(printf "%.0f" "$value" 2>/dev/null || echo 0)
+        local threshold_warn=$((threshold - 10))
+        
+        if [ "$value_int" -gt "$threshold" ]; then
+            color="${RED}"
+        elif [ "$value_int" -gt "$threshold_warn" ]; then
+            color="${YELLOW}"
+        fi
         
         printf "  %-15s ${color}[" "$label"
         printf "█%.0s" $(seq 1 $filled)
