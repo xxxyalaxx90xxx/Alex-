@@ -58,6 +58,12 @@ if [ -z "${ADVERTISE_ADDRESS}" ]; then
   exit 1
 fi
 
+echo "Starting Kubernetes installation with parameters:"
+echo "  ADVERTISE_ADDRESS: ${ADVERTISE_ADDRESS}"
+echo "  POD_CIDR: ${POD_CIDR}"
+echo "  HUGEPAGES_2MI: ${HUGEPAGES_2MI:-not set}"
+echo "  KUBECONFIG_FILE: ${KUBECONFIG_FILE}"
+
 echo "[1/6] Configure Kubernetes yum repository"
 $SUDO_CMD tee /etc/yum.repos.d/kubernetes.repo >/dev/null <<'EOF'
 [kubernetes]
@@ -84,10 +90,10 @@ $SUDO_CMD mkdir -p /etc/containerd
 if [ ! -f /etc/containerd/config.toml ]; then
   $SUDO_CMD containerd config default | $SUDO_CMD tee /etc/containerd/config.toml >/dev/null
 fi
-if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["'\"'\"']cri["'\"'\"'][[:space:]]*\]' /etc/containerd/config.toml; then
-  $SUDO_CMD sed -i -E 's/^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["'\"'\"']cri["'\"'\"'][[:space:]]*\]/# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
+if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]' /etc/containerd/config.toml; then
+  $SUDO_CMD sed -i -E 's/^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]/# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
 fi
-$SUDO_CMD systemctl enable --now containerd
+$SUDO_CMD systemctl enable containerd
 $SUDO_CMD systemctl restart containerd
 
 if [ -n "${HUGEPAGES_2MI}" ]; then
@@ -150,7 +156,24 @@ fi
 manifest_tmp=$(mktemp)
 cleanup_manifest() { rm -f "${manifest_tmp}"; }
 trap cleanup_manifest EXIT
-curl -L --fail "${FLANNEL_MANIFEST_URL}" -o "${manifest_tmp}"
+
+# Download flannel manifest with retry
+max_retries=3
+retry_count=0
+while [ ${retry_count} -lt ${max_retries} ]; do
+  if curl -L --fail --connect-timeout 30 "${FLANNEL_MANIFEST_URL}" -o "${manifest_tmp}"; then
+    break
+  fi
+  retry_count=$((retry_count + 1))
+  if [ ${retry_count} -lt ${max_retries} ]; then
+    echo "Download failed, retrying (${retry_count}/${max_retries})..." >&2
+    sleep 5
+  else
+    echo "Failed to download flannel manifest after ${max_retries} attempts." >&2
+    exit 1
+  fi
+done
+
 if [ -n "${FLANNEL_MANIFEST_SHA256}" ]; then
   downloaded_sha=$(sha256sum "${manifest_tmp}" | awk '{print $1}')
   if [ "${downloaded_sha}" != "${FLANNEL_MANIFEST_SHA256}" ]; then
