@@ -12,13 +12,36 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== Auto Scan & Analyze System ===${NC}"
+# Show banner
+show_banner() {
+    clear
+    echo -e "${CYAN}"
+    cat << "EOF"
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║      🔍 Automatic System Scan & Analysis Tool 🔍                      ║
+║                                                                       ║
+║          Intelligent Configuration & Optimization Analysis            ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+EOF
+    echo -e "${NC}"
+    echo -e "${MAGENTA}   Author: Alexander Mathey | Elektronikx-Center-Matte ® ™${NC}"
+    echo ""
+}
+
+show_banner
 
 # Scan System
 scan_system() {
-    echo -e "${GREEN}[1/5] Scanning system...${NC}"
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 📡 [1/5] Scanning System Environment...                               ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
     
     # Detect OS
     if [ -f /etc/os-release ]; then
@@ -48,71 +71,118 @@ scan_system() {
         DEVICE="Standard Computer"
     fi
     
-    echo -e "  OS: ${GREEN}$OS $VERSION${NC}"
-    echo -e "  Architecture: ${GREEN}$ARCH${NC}"
-    echo -e "  Memory: ${GREEN}${TOTAL_MEM}MB${NC}"
-    echo -e "  CPU Cores: ${GREEN}$CPU_CORES${NC}"
-    echo -e "  Device: ${GREEN}$DEVICE${NC}"
+    echo -e "  ${CYAN}OS:${NC}             ${GREEN}$OS $VERSION${NC}"
+    echo -e "  ${CYAN}Architecture:${NC}   ${GREEN}$ARCH${NC}"
+    echo -e "  ${CYAN}Memory:${NC}         ${GREEN}${TOTAL_MEM}MB${NC}"
+    echo -e "  ${CYAN}CPU Cores:${NC}      ${GREEN}$CPU_CORES${NC}"
+    echo -e "  ${CYAN}Device:${NC}         ${GREEN}$DEVICE${NC}"
+    echo ""
+    
+    # Show resource bar
+    local mem_gb=$(awk "BEGIN {printf \"%.1f\", $TOTAL_MEM/1024}")
+    echo -e "  ${CYAN}Resource Profile:${NC}"
+    
+    if [ "$TOTAL_MEM" -lt 2048 ]; then
+        echo -e "    ${YELLOW}⚠${NC} Low Memory Device (${mem_gb}GB) - K3s Recommended"
+    elif [ "$TOTAL_MEM" -lt 4096 ]; then
+        echo -e "    ${GREEN}✓${NC} Standard Device (${mem_gb}GB) - K3s or Full Kubernetes"
+    else
+        echo -e "    ${GREEN}✓${NC} High Memory Device (${mem_gb}GB) - Full Kubernetes Recommended"
+    fi
+    echo ""
 }
 
 # Scan Installed Tools
 scan_tools() {
-    echo -e "${GREEN}[2/5] Scanning installed tools...${NC}"
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 🛠️  [2/5] Scanning Installed Tools & Services...                      ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
     
     INSTALLED_TOOLS=()
     
+    echo -e "  ${CYAN}━━━ Kubernetes Tools ━━━${NC}"
     # Check for kubectl
     if command -v kubectl &> /dev/null; then
         INSTALLED_TOOLS+=("kubectl")
-        echo -e "  ✓ kubectl: ${GREEN}$(kubectl version --client --short 2>/dev/null | head -n1)${NC}"
+        local version=$(kubectl version --client --short 2>/dev/null | head -n1 | awk '{print $3}')
+        echo -e "    ${GREEN}✓${NC} kubectl ${GREEN}$version${NC}"
+    else
+        echo -e "    ${RED}✗${NC} kubectl ${YELLOW}(not installed)${NC}"
     fi
     
     # Check for K3s
     if command -v k3s &> /dev/null; then
         INSTALLED_TOOLS+=("k3s")
-        echo -e "  ✓ K3s: ${GREEN}$(k3s --version | head -n1)${NC}"
+        local version=$(k3s --version 2>/dev/null | head -n1 | awk '{print $3}')
+        echo -e "    ${GREEN}✓${NC} K3s ${GREEN}$version${NC}"
+    else
+        echo -e "    ${RED}✗${NC} K3s ${YELLOW}(not installed)${NC}"
     fi
     
     # Check for Docker
     if command -v docker &> /dev/null; then
         INSTALLED_TOOLS+=("docker")
-        echo -e "  ✓ Docker: ${GREEN}$(docker --version)${NC}"
+        local version=$(docker --version | awk '{print $3}' | tr -d ',')
+        echo -e "    ${GREEN}✓${NC} Docker ${GREEN}$version${NC}"
+    else
+        echo -e "    ${RED}✗${NC} Docker ${YELLOW}(not installed)${NC}"
     fi
     
+    echo ""
+    echo -e "  ${CYAN}━━━ Database Services ━━━${NC}"
     # Check for databases
     if command -v psql &> /dev/null; then
         INSTALLED_TOOLS+=("postgresql")
-        echo -e "  ✓ PostgreSQL: ${GREEN}Installed${NC}"
+        echo -e "    ${GREEN}✓${NC} PostgreSQL"
+    else
+        echo -e "    ${RED}✗${NC} PostgreSQL ${YELLOW}(not installed)${NC}"
     fi
     
     if command -v mysql &> /dev/null; then
         INSTALLED_TOOLS+=("mysql")
-        echo -e "  ✓ MySQL: ${GREEN}Installed${NC}"
+        echo -e "    ${GREEN}✓${NC} MySQL/MariaDB"
+    else
+        echo -e "    ${RED}✗${NC} MySQL/MariaDB ${YELLOW}(not installed)${NC}"
     fi
     
     if command -v redis-cli &> /dev/null; then
         INSTALLED_TOOLS+=("redis")
-        echo -e "  ✓ Redis: ${GREEN}Installed${NC}"
+        echo -e "    ${GREEN}✓${NC} Redis"
+    else
+        echo -e "    ${RED}✗${NC} Redis ${YELLOW}(not installed)${NC}"
     fi
     
     if command -v mongo &> /dev/null || command -v mongosh &> /dev/null; then
         INSTALLED_TOOLS+=("mongodb")
-        echo -e "  ✓ MongoDB: ${GREEN}Installed${NC}"
+        echo -e "    ${GREEN}✓${NC} MongoDB"
+    else
+        echo -e "    ${RED}✗${NC} MongoDB ${YELLOW}(not installed)${NC}"
     fi
     
+    echo ""
+    echo -e "  ${CYAN}━━━ AI & Advanced Tools ━━━${NC}"
     # Check for AI tools
     if [ -d ~/.termux-ai ]; then
         INSTALLED_TOOLS+=("ai-assistant")
-        echo -e "  ✓ AI Assistant: ${GREEN}Installed${NC}"
+        echo -e "    ${GREEN}✓${NC} AI Assistant"
+    else
+        echo -e "    ${RED}✗${NC} AI Assistant ${YELLOW}(not installed)${NC}"
     fi
     
     # Check for web dashboard
     if [ -f /usr/local/bin/k8s-dashboard ]; then
         INSTALLED_TOOLS+=("web-dashboard")
-        echo -e "  ✓ Web Dashboard: ${GREEN}Installed${NC}"
+        echo -e "    ${GREEN}✓${NC} Web Dashboard"
+    else
+        echo -e "    ${RED}✗${NC} Web Dashboard ${YELLOW}(not installed)${NC}"
     fi
     
-    echo -e "  Total tools: ${GREEN}${#INSTALLED_TOOLS[@]}${NC}"
+    echo ""
+    echo -e "  ${CYAN}╭─────────────────────────────────────────╮${NC}"
+    echo -e "  ${CYAN}│${NC} Total Installed Tools: ${GREEN}${#INSTALLED_TOOLS[@]}${NC}/${CYAN}30${NC}"
+    echo -e "  ${CYAN}╰─────────────────────────────────────────╯${NC}"
+    echo ""
 }
 
 # Analyze Configuration
