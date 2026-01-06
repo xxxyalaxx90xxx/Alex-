@@ -2,8 +2,7 @@
 
 ## Quick Installation Options
 
-- [Docker in VS Code](#install-in-github-copilot-on-vs-code)
-- [Docker in VS Code Insiders](#install-in-github-copilot-on-vs-code)
+- [Docker in VS Code / VS Code Insiders](#install-in-github-copilot-on-vs-code)
 - [Docker in Other IDEs](#install-in-github-copilot-on-other-ides-jetbrains-visual-studio-eclipse-etc)
 
 ## Overview
@@ -120,16 +119,21 @@ Add the following JSON block to your IDE's MCP settings:
           "--rm",
           "-e",
           "GITHUB_PERSONAL_ACCESS_TOKEN",
+          "-e",
+          "GITHUB_HOST",
           "ghcr.io/github/github-mcp-server"
         ],
         "env": {
-          "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_token}"
+          "GITHUB_PERSONAL_ACCESS_TOKEN": "${input:github_token}",
+          "GITHUB_HOST": "https://github.com"
         }
       }
     }
   }
 }
 ```
+
+> **Note**: For GitHub Enterprise Server or Enterprise Cloud with data residency, update the `GITHUB_HOST` value accordingly. See [Configuration Options](#configuration-options) for examples.
 
 ## Configuration Options
 
