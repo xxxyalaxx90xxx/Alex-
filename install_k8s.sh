@@ -84,6 +84,8 @@ $SUDO_CMD mkdir -p /etc/containerd
 if [ ! -f /etc/containerd/config.toml ]; then
   $SUDO_CMD containerd config default | $SUDO_CMD tee /etc/containerd/config.toml >/dev/null
 fi
+# Check if containerd has CRI disabled (matches both "cri" and 'cri')
+# Using \047 (octal for single quote) avoids complex quote escaping in regex
 if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]' /etc/containerd/config.toml; then
   $SUDO_CMD sed -i -E 's/^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]/# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
 fi
