@@ -84,8 +84,10 @@ $SUDO_CMD mkdir -p /etc/containerd
 if [ ! -f /etc/containerd/config.toml ]; then
   $SUDO_CMD containerd config default | $SUDO_CMD tee /etc/containerd/config.toml >/dev/null
 fi
-if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["'\"'\"']cri["'\"'\"'][[:space:]]*\]' /etc/containerd/config.toml; then
-  $SUDO_CMD sed -i -E 's/^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["'\"'\"']cri["'\"'\"'][[:space:]]*\]/# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
+# Check if containerd has CRI disabled (matches both "cri" and 'cri')
+# Using \047 (octal for single quote) avoids complex quote escaping in regex
+if $SUDO_CMD grep -Eq '^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]' /etc/containerd/config.toml; then
+  $SUDO_CMD sed -i -E 's/^[[:space:]]*disabled_plugins[[:space:]]*=[[:space:]]*\[[[:space:]]*["\047]cri["\047][[:space:]]*\]/# disabled_plugins = ["cri"]/g' /etc/containerd/config.toml
 fi
 $SUDO_CMD systemctl enable --now containerd
 $SUDO_CMD systemctl restart containerd
