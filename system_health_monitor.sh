@@ -178,29 +178,141 @@ stop_monitor() {
 
 # Show status
 show_status() {
+    clear
+    echo -e "${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════════════════╗"
+    echo "║              📊 System Health Monitor Status 📊                      ║"
+    echo "╚═══════════════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+    echo ""
+    
     if is_running; then
         local pid=$(cat "$PID_FILE")
-        echo -e "${GREEN}● Monitor is RUNNING${NC}"
-        echo "PID: $pid"
-        echo "Uptime: $(ps -p "$pid" -o etime= 2>/dev/null || echo 'N/A')"
+        local uptime=$(ps -p "$pid" -o etime= 2>/dev/null || echo 'N/A')
+        
+        echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${BLUE}║ 🟢 Daemon Status                                                      ║${NC}"
+        echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+        echo -e "  Status:        ${GREEN}● RUNNING${NC}"
+        echo -e "  PID:           ${GREEN}$pid${NC}"
+        echo -e "  Uptime:        ${GREEN}$uptime${NC}"
+        echo -e "  Interval:      ${GREEN}${MONITOR_INTERVAL}s${NC}"
+        echo ""
     else
-        echo -e "${YELLOW}● Monitor is STOPPED${NC}"
+        echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${BLUE}║ 🔴 Daemon Status                                                      ║${NC}"
+        echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+        echo -e "  Status:        ${YELLOW}● STOPPED${NC}"
+        echo ""
     fi
     
     if [[ -f "$METRICS_FILE" ]]; then
-        echo
-        echo "=== Latest Metrics ==="
-        cat "$METRICS_FILE"
+        echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${BLUE}║ 📈 Current Metrics                                                    ║${NC}"
+        echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+        
+        # Parse metrics
+        local cpu=$(grep "^system_cpu_usage" "$METRICS_FILE" | awk '{print $2}')
+        local mem=$(grep "^system_memory_usage" "$METRICS_FILE" | awk '{print $2}')
+        local disk=$(grep "^system_disk_usage" "$METRICS_FILE" | awk '{print $2}')
+        local conns=$(grep "^system_network_connections" "$METRICS_FILE" | awk '{print $2}')
+        local timestamp=$(grep "^timestamp" "$METRICS_FILE" | cut -d' ' -f2-)
+        
+        # Display with color coding (using integer comparison)
+        local cpu_color="${GREEN}"
+        local cpu_int=$(printf "%.0f" "$cpu" 2>/dev/null || echo 0)
+        [ "$cpu_int" -gt "$CPU_THRESHOLD" ] && cpu_color="${RED}"
+        
+        local mem_color="${GREEN}"
+        local mem_int=$(printf "%.0f" "$mem" 2>/dev/null || echo 0)
+        [ "$mem_int" -gt "$MEMORY_THRESHOLD" ] && mem_color="${RED}"
+        
+        local disk_color="${GREEN}"
+        [ "$disk" -gt "$DISK_THRESHOLD" ] && disk_color="${RED}"
+        
+        echo -e "  CPU Usage:     ${cpu_color}${cpu}%${NC} (threshold: ${CPU_THRESHOLD}%)"
+        echo -e "  Memory Usage:  ${mem_color}${mem}%${NC} (threshold: ${MEMORY_THRESHOLD}%)"
+        echo -e "  Disk Usage:    ${disk_color}${disk}%${NC} (threshold: ${DISK_THRESHOLD}%)"
+        echo -e "  Connections:   ${GREEN}${conns}${NC}"
+        echo ""
+        echo -e "  Last Update:   ${CYAN}${timestamp}${NC}"
+        echo ""
     fi
+    
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 📁 Log Files                                                          ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "  Monitor Log:   ${CYAN}$LOG_FILE${NC}"
+    echo -e "  Metrics File:  ${CYAN}$METRICS_FILE${NC}"
+    echo ""
 }
 
 # Show metrics
 show_metrics() {
-    if [[ -f "$METRICS_FILE" ]]; then
-        cat "$METRICS_FILE"
-    else
-        echo "No metrics available. Start the monitor first."
+    if [[ ! -f "$METRICS_FILE" ]]; then
+        echo -e "${YELLOW}No metrics available. Start the monitor first.${NC}"
+        return 1
     fi
+    
+    clear
+    echo -e "${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════════════════╗"
+    echo "║                    📊 System Health Metrics 📊                       ║"
+    echo "╚═══════════════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+    echo ""
+    
+    # Parse and display metrics with visual bars
+    local cpu=$(grep "^system_cpu_usage" "$METRICS_FILE" | awk '{print $2}')
+    local mem=$(grep "^system_memory_usage" "$METRICS_FILE" | awk '{print $2}')
+    local disk=$(grep "^system_disk_usage" "$METRICS_FILE" | awk '{print $2}')
+    local conns=$(grep "^system_network_connections" "$METRICS_FILE" | awk '{print $2}')
+    local timestamp=$(grep "^timestamp" "$METRICS_FILE" | cut -d' ' -f2-)
+    
+    # Generate progress bars
+    generate_metric_bar() {
+        local value=$1
+        local threshold=$2
+        local label=$3
+        local bar_length=40
+        # Use bash arithmetic for better performance
+        local value_int=$(printf "%.0f" "$value" 2>/dev/null || echo 0)
+        local filled=$((value_int * bar_length / 100))
+        local empty=$((bar_length - filled))
+        
+        # Color based on threshold (using integer comparison for better portability)
+        local color="${GREEN}"
+        local threshold_warn=$((threshold - 10))
+        
+        if [ "$value_int" -gt "$threshold" ]; then
+            color="${RED}"
+        elif [ "$value_int" -gt "$threshold_warn" ]; then
+            color="${YELLOW}"
+        fi
+        
+        printf "  %-15s ${color}[" "$label"
+        printf "█%.0s" $(seq 1 $filled)
+        printf "░%.0s" $(seq 1 $empty)
+        printf "] %.1f%%${NC}\n" "$value"
+    }
+    
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════${NC}"
+    generate_metric_bar "$cpu" "$CPU_THRESHOLD" "CPU"
+    generate_metric_bar "$mem" "$MEMORY_THRESHOLD" "Memory"
+    generate_metric_bar "$disk" "$DISK_THRESHOLD" "Disk"
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "  ${CYAN}Network Connections:${NC} ${GREEN}$conns${NC}"
+    echo -e "  ${CYAN}Last Update:${NC}         ${GREEN}$timestamp${NC}"
+    echo ""
+    
+    echo -e "${YELLOW}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║${NC} ⚠️  Alert Thresholds:"
+    echo -e "${YELLOW}║${NC}   CPU:    ${CYAN}${CPU_THRESHOLD}%${NC}"
+    echo -e "${YELLOW}║${NC}   Memory: ${CYAN}${MEMORY_THRESHOLD}%${NC}"
+    echo -e "${YELLOW}║${NC}   Disk:   ${CYAN}${DISK_THRESHOLD}%${NC}"
+    echo -e "${YELLOW}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
 }
 
 # Main
@@ -223,14 +335,26 @@ case "${1:-}" in
         show_metrics
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|metrics}"
-        echo
-        echo "Commands:"
-        echo "  start    - Start the health monitor daemon"
-        echo "  stop     - Stop the health monitor daemon"
-        echo "  restart  - Restart the health monitor daemon"
-        echo "  status   - Show monitor status"
-        echo "  metrics  - Display current metrics"
+        echo -e "${CYAN}"
+        echo "╔═══════════════════════════════════════════════════════════════════════╗"
+        echo "║              🏥 System Health Monitor - Usage 🏥                     ║"
+        echo "╚═══════════════════════════════════════════════════════════════════════╝"
+        echo -e "${NC}"
+        echo ""
+        echo -e "${YELLOW}Usage:${NC} $0 ${CYAN}{start|stop|restart|status|metrics}${NC}"
+        echo ""
+        echo -e "${GREEN}Commands:${NC}"
+        echo -e "  ${CYAN}start${NC}    - 🚀 Start the health monitor daemon"
+        echo -e "  ${CYAN}stop${NC}     - ⏹️  Stop the health monitor daemon"
+        echo -e "  ${CYAN}restart${NC}  - 🔄 Restart the health monitor daemon"
+        echo -e "  ${CYAN}status${NC}   - 📊 Show monitor status and current metrics"
+        echo -e "  ${CYAN}metrics${NC}  - 📈 Display current metrics with visual bars"
+        echo ""
+        echo -e "${BLUE}Examples:${NC}"
+        echo -e "  $0 start     # Start monitoring"
+        echo -e "  $0 status    # Check daemon status"
+        echo -e "  $0 metrics   # View visual metrics"
+        echo ""
         exit 1
         ;;
 esac

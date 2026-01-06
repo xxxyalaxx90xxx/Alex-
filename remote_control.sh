@@ -24,146 +24,318 @@ WEB_PORT=${WEB_PORT:-8080}
 show_banner() {
     clear
     echo -e "${CYAN}"
-    echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║                                                              ║"
-    echo "║        🎮 Kubernetes Remote Control - Fernbedienung 🎮       ║"
-    echo "║                                                              ║"
-    echo "║              Complete System Management Interface            ║"
-    echo "║                                                              ║"
-    echo "╚══════════════════════════════════════════════════════════════╝"
+    cat << "EOF"
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║     ██╗  ██╗ █████╗ ███████╗    ██████╗ ███████╗███╗   ███╗ ██████╗  ║
+║     ██║ ██╔╝██╔══██╗██╔════╝    ██╔══██╗██╔════╝████╗ ████║██╔═══██╗ ║
+║     █████╔╝ ╚█████╔╝███████╗    ██████╔╝█████╗  ██╔████╔██║██║   ██║ ║
+║     ██╔═██╗ ██╔══██╗╚════██║    ██╔══██╗██╔══╝  ██║╚██╔╝██║██║   ██║ ║
+║     ██║  ██╗╚█████╔╝███████║    ██║  ██║███████╗██║ ╚═╝ ██║╚██████╔╝ ║
+║     ╚═╝  ╚═╝ ╚════╝ ╚══════╝    ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝  ║
+║                                                                       ║
+║        🎮  Kubernetes Remote Control - Fernbedienung  🎮             ║
+║                Complete System Management Interface                   ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+EOF
     echo -e "${NC}"
+    echo -e "${MAGENTA}   Author: Alexander Mathey | Elektronikx-Center-Matte ® ™${NC}"
+    echo ""
 }
 
 show_menu() {
-    echo -e "${BLUE}=== Main Menu ===${NC}"
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║                      📋 Main Menu 📋                      ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${GREEN}[Installation]${NC}"
-    echo "  1) Install Complete System"
-    echo "  2) Install Optimized (Mobile)"
-    echo "  3) Uninstall System"
+    echo -e "${GREEN}┌─ 💿 Installation${NC}"
+    echo -e "${GREEN}├──${NC}  ${CYAN}1)${NC} Install Complete System      🚀"
+    echo -e "${GREEN}├──${NC}  ${CYAN}2)${NC} Install Optimized (Mobile)   📱"
+    echo -e "${GREEN}└──${NC}  ${CYAN}3)${NC} Uninstall System             🗑️"
     echo ""
-    echo -e "${GREEN}[Management]${NC}"
-    echo "  4) Start All Services"
-    echo "  5) Stop All Services"
-    echo "  6) Restart All Services"
-    echo "  7) Check Status"
+    echo -e "${GREEN}┌─ 🔧 Management${NC}"
+    echo -e "${GREEN}├──${NC}  ${CYAN}4)${NC} Start All Services           ▶️"
+    echo -e "${GREEN}├──${NC}  ${CYAN}5)${NC} Stop All Services            ⏹️"
+    echo -e "${GREEN}├──${NC}  ${CYAN}6)${NC} Restart All Services         🔄"
+    echo -e "${GREEN}└──${NC}  ${CYAN}7)${NC} Check Status                 📊"
     echo ""
-    echo -e "${GREEN}[Kubernetes]${NC}"
-    echo "  8) Validate Cluster"
-    echo "  9) Analyze Cluster"
-    echo " 10) Backup Cluster"
-    echo " 11) Restore Cluster"
-    echo " 12) Upgrade Kubernetes"
+    echo -e "${GREEN}┌─ ☸️  Kubernetes${NC}"
+    echo -e "${GREEN}├──${NC}  ${CYAN}8)${NC} Validate Cluster             ✅"
+    echo -e "${GREEN}├──${NC}  ${CYAN}9)${NC} Analyze Cluster              🔍"
+    echo -e "${GREEN}├──${NC} ${CYAN}10)${NC} Backup Cluster               💾"
+    echo -e "${GREEN}├──${NC} ${CYAN}11)${NC} Restore Cluster              📥"
+    echo -e "${GREEN}└──${NC} ${CYAN}12)${NC} Upgrade Kubernetes           ⬆️"
     echo ""
-    echo -e "${GREEN}[Databases]${NC}"
-    echo " 13) Start Databases"
-    echo " 14) Stop Databases"
-    echo " 15) Database Status"
+    echo -e "${GREEN}┌─ 🗄️  Databases${NC}"
+    echo -e "${GREEN}├──${NC} ${CYAN}13)${NC} Start Databases              ▶️"
+    echo -e "${GREEN}├──${NC} ${CYAN}14)${NC} Stop Databases               ⏹️"
+    echo -e "${GREEN}└──${NC} ${CYAN}15)${NC} Database Status              📊"
     echo ""
-    echo -e "${GREEN}[AI & Tools]${NC}"
-    echo " 16) AI Assistant"
-    echo " 17) GitHub MCP"
-    echo " 18) AI File Creator"
+    echo -e "${GREEN}┌─ 🤖 AI & Tools${NC}"
+    echo -e "${GREEN}├──${NC} ${CYAN}16)${NC} AI Assistant                 🧠"
+    echo -e "${GREEN}├──${NC} ${CYAN}17)${NC} GitHub MCP                   🐙"
+    echo -e "${GREEN}└──${NC} ${CYAN}18)${NC} AI File Creator              ✨"
     echo ""
-    echo -e "${GREEN}[Web Interfaces]${NC}"
-    echo " 19) Open Web Dashboard"
-    echo " 20) Open Database UIs"
+    echo -e "${GREEN}┌─ 🌐 Web Interfaces${NC}"
+    echo -e "${GREEN}├──${NC} ${CYAN}19)${NC} Open Web Dashboard           🖥️"
+    echo -e "${GREEN}└──${NC} ${CYAN}20)${NC} Open Database UIs            📊"
     echo ""
-    echo -e "${GREEN}[Monitoring]${NC}"
-    echo " 21) Setup Monitoring"
-    echo " 22) View Metrics"
-    echo " 23) Performance Optimization"
+    echo -e "${GREEN}┌─ 📈 Monitoring${NC}"
+    echo -e "${GREEN}├──${NC} ${CYAN}21)${NC} Setup Monitoring             📡"
+    echo -e "${GREEN}├──${NC} ${CYAN}22)${NC} View Metrics                 📊"
+    echo -e "${GREEN}└──${NC} ${CYAN}23)${NC} Performance Optimization     ⚡"
     echo ""
-    echo -e "${GREEN}[Troubleshooting]${NC}"
-    echo " 24) Auto Troubleshoot"
-    echo " 25) View Logs"
+    echo -e "${GREEN}┌─ 🔧 Troubleshooting${NC}"
+    echo -e "${GREEN}├──${NC} ${CYAN}24)${NC} Auto Troubleshoot            🔍"
+    echo -e "${GREEN}└──${NC} ${CYAN}25)${NC} View Logs                    📝"
     echo ""
-    echo -e "${GREEN}[System]${NC}"
-    echo " 26) Auto Scan & Analyze"
-    echo " 27) System Information"
-    echo " 28) Remote Access Setup"
+    echo -e "${GREEN}┌─ ⚙️  System${NC}"
+    echo -e "${GREEN}├──${NC} ${CYAN}26)${NC} Auto Scan & Analyze          🔍"
+    echo -e "${GREEN}├──${NC} ${CYAN}27)${NC} System Information           💻"
+    echo -e "${GREEN}└──${NC} ${CYAN}28)${NC} Remote Access Setup          🌍"
     echo ""
-    echo -e "${YELLOW}[Other]${NC}"
-    echo "  0) Exit"
+    echo -e "${YELLOW}┌─ 🚪 Exit${NC}"
+    echo -e "${YELLOW}└──${NC}  ${CYAN}0)${NC} Exit Remote Control          👋"
     echo ""
-    echo -ne "${CYAN}Select option: ${NC}"
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
+    echo -ne "${CYAN}║ Select option [0-28]: ${NC}"
 }
 
 # Service Management
 start_all_services() {
-    echo -e "${GREEN}Starting all services...${NC}"
+    clear
+    echo -e "${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════════════════╗"
+    echo "║                     ▶️  Starting All Services  ▶️                     ║"
+    echo "╚═══════════════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+    echo ""
+    
+    local total=0
+    local started=0
     
     # Start K3s
+    ((total++))
     if command -v k3s &> /dev/null; then
-        sudo systemctl start k3s 2>/dev/null || sudo k3s server &
-        echo -e "  ✓ K3s started"
+        echo -ne "  [ ... ] Starting K3s..."
+        if sudo systemctl start k3s 2>/dev/null || sudo k3s server & then
+            echo -e "\r  [${GREEN}  ✓  ${NC}] K3s started successfully"
+            ((started++))
+        else
+            echo -e "\r  [${RED}  ✗  ${NC}] Failed to start K3s"
+        fi
+    else
+        echo -e "  [${YELLOW}  -  ${NC}] K3s not installed"
     fi
     
     # Start databases
     for service in postgresql mysql redis-server mongod; do
+        ((total++))
         if systemctl list-unit-files | grep -q $service; then
-            sudo systemctl start $service 2>/dev/null && echo -e "  ✓ $service started"
+            echo -ne "  [ ... ] Starting $service..."
+            if sudo systemctl start $service 2>/dev/null; then
+                echo -e "\r  [${GREEN}  ✓  ${NC}] $service started successfully"
+                ((started++))
+            else
+                echo -e "\r  [${RED}  ✗  ${NC}] Failed to start $service"
+            fi
         fi
     done
     
     # Start web dashboard
+    ((total++))
     if [ -f /usr/local/bin/k8s-dashboard ]; then
-        /usr/local/bin/k8s-dashboard &
-        echo -e "  ✓ Web dashboard started"
+        echo -ne "  [ ... ] Starting Web Dashboard..."
+        if /usr/local/bin/k8s-dashboard & then
+            echo -e "\r  [${GREEN}  ✓  ${NC}] Web Dashboard started successfully"
+            ((started++))
+        else
+            echo -e "\r  [${RED}  ✗  ${NC}] Failed to start Web Dashboard"
+        fi
+    else
+        echo -e "  [${YELLOW}  -  ${NC}] Web Dashboard not installed"
     fi
     
-    echo -e "${GREEN}All services started!${NC}"
-    sleep 2
+    echo ""
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║ Summary: ${GREEN}$started${NC}/${CYAN}$total${NC} services started successfully${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "Press Enter to continue..."
+    read
 }
 
 stop_all_services() {
-    echo -e "${YELLOW}Stopping all services...${NC}"
+    clear
+    echo -e "${YELLOW}"
+    echo "╔═══════════════════════════════════════════════════════════════════════╗"
+    echo "║                     ⏹️  Stopping All Services  ⏹️                     ║"
+    echo "╚═══════════════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+    echo ""
+    
+    local total=0
+    local stopped=0
     
     # Stop K3s
+    ((total++))
     if command -v k3s &> /dev/null; then
-        sudo systemctl stop k3s 2>/dev/null || sudo pkill -9 k3s
-        echo -e "  ✓ K3s stopped"
+        echo -ne "  [ ... ] Stopping K3s..."
+        if sudo systemctl stop k3s 2>/dev/null || sudo pkill -9 k3s; then
+            echo -e "\r  [${GREEN}  ✓  ${NC}] K3s stopped successfully"
+            ((stopped++))
+        else
+            echo -e "\r  [${RED}  ✗  ${NC}] Failed to stop K3s"
+        fi
     fi
     
     # Stop databases
     for service in postgresql mysql redis-server mongod; do
+        ((total++))
         if systemctl list-unit-files | grep -q $service; then
-            sudo systemctl stop $service 2>/dev/null && echo -e "  ✓ $service stopped"
+            echo -ne "  [ ... ] Stopping $service..."
+            if sudo systemctl stop $service 2>/dev/null; then
+                echo -e "\r  [${GREEN}  ✓  ${NC}] $service stopped successfully"
+                ((stopped++))
+            else
+                echo -e "\r  [${RED}  ✗  ${NC}] Failed to stop $service"
+            fi
         fi
     done
     
-    echo -e "${GREEN}All services stopped!${NC}"
-    sleep 2
+    echo ""
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║ Summary: ${GREEN}$stopped${NC}/${CYAN}$total${NC} services stopped successfully${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "Press Enter to continue..."
+    read
 }
 
 check_status() {
-    echo -e "${BLUE}=== System Status ===${NC}"
+    clear
+    echo -e "${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════════════════╗"
+    echo "║                       📊 System Status Dashboard 📊                  ║"
+    echo "╚═══════════════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
     echo ""
     
     # K3s status
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ ☸️  Kubernetes Cluster Status                                         ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    
     if command -v kubectl &> /dev/null && kubectl cluster-info &> /dev/null; then
-        echo -e "Kubernetes: ${GREEN}✓ Running${NC}"
-        echo -e "  Nodes: $(kubectl get nodes --no-headers 2>/dev/null | wc -l)"
-        echo -e "  Pods: $(kubectl get pods --all-namespaces --no-headers 2>/dev/null | wc -l)"
+        local nodes=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
+        local pods=$(kubectl get pods --all-namespaces --no-headers 2>/dev/null | wc -l)
+        local running_pods=$(kubectl get pods --all-namespaces --no-headers 2>/dev/null | grep -c Running || echo 0)
+        
+        echo -e "  Status:        ${GREEN}●${NC} Running"
+        echo -e "  Nodes:         ${GREEN}$nodes${NC}"
+        echo -e "  Total Pods:    ${GREEN}$pods${NC}"
+        echo -e "  Running Pods:  ${GREEN}$running_pods${NC}"
+        
+        # Show node health
+        echo ""
+        echo -e "  ${CYAN}Node Health:${NC}"
+        kubectl get nodes --no-headers 2>/dev/null | while read node status role age version; do
+            if [[ "$status" == "Ready" ]]; then
+                echo -e "    ✓ $node: ${GREEN}$status${NC}"
+            else
+                echo -e "    ✗ $node: ${RED}$status${NC}"
+            fi
+        done
     else
-        echo -e "Kubernetes: ${RED}✗ Not Running${NC}"
+        echo -e "  Status: ${RED}●${NC} Not Running"
+        echo -e "  ${YELLOW}ℹ${NC}  Run option 1 or 2 to install Kubernetes"
     fi
     
     echo ""
     
     # Database status
-    echo -e "${BLUE}Databases:${NC}"
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 🗄️  Database Services Status                                          ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    
+    local db_running=0
+    local db_total=0
+    
     for db in postgresql mysql redis-server mongod; do
+        ((db_total++))
         if systemctl is-active --quiet $db 2>/dev/null || pgrep -x $db &>/dev/null; then
-            echo -e "  $db: ${GREEN}✓ Running${NC}"
+            echo -e "  ✓ $db: ${GREEN}●${NC} Running"
+            ((db_running++))
         else
-            echo -e "  $db: ${RED}✗ Stopped${NC}"
+            echo -e "  ✗ $db: ${RED}●${NC} Stopped"
         fi
     done
     
     echo ""
-    echo -e "Press Enter to continue..."
+    echo -e "  Services: ${GREEN}$db_running${NC}/${CYAN}$db_total${NC} running"
+    echo ""
+    
+    # System Resources
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 💻 System Resources                                                   ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    
+    # CPU
+    local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1 || echo "0")
+    local cpu_bar=$(generate_bar "$cpu_usage" 100)
+    echo -e "  CPU Usage:     $cpu_bar ${GREEN}${cpu_usage}%${NC}"
+    
+    # Memory
+    local mem_total=$(free -m | awk 'NR==2{print $2}')
+    local mem_used=$(free -m | awk 'NR==2{print $3}')
+    local mem_percent=$(awk "BEGIN {printf \"%.0f\", ($mem_used/$mem_total)*100}")
+    local mem_bar=$(generate_bar "$mem_percent" 100)
+    echo -e "  Memory Usage:  $mem_bar ${GREEN}${mem_used}MB${NC}/${CYAN}${mem_total}MB${NC} (${mem_percent}%)"
+    
+    # Disk
+    local disk_usage=$(df -h / | awk 'NR==2{print $5}' | cut -d'%' -f1)
+    local disk_bar=$(generate_bar "$disk_usage" 100)
+    local disk_free=$(df -h / | awk 'NR==2{print $4}')
+    echo -e "  Disk Usage:    $disk_bar ${GREEN}${disk_usage}%${NC} (${disk_free} free)"
+    
+    echo ""
+    
+    # Uptime
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ ⏱️  System Uptime                                                     ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "  ${GREEN}$(uptime -p)${NC}"
+    echo ""
+    
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║ Press Enter to return to menu...                                      ║${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     read
+}
+
+# Generate progress bar
+generate_bar() {
+    local value=$1
+    local max=$2
+    local bar_length=30
+    # Use bash arithmetic for better performance
+    local value_int=$(printf "%.0f" "$value" 2>/dev/null || echo 0)
+    local filled=$((value_int * bar_length / max))
+    local empty=$((bar_length - filled))
+    
+    # Color based on percentage
+    local color="${GREEN}"
+    if [ "$value_int" -gt 80 ]; then
+        color="${RED}"
+    elif [ "$value_int" -gt 60 ]; then
+        color="${YELLOW}"
+    fi
+    
+    printf "${color}["
+    printf "█%.0s" $(seq 1 $filled)
+    printf "░%.0s" $(seq 1 $empty)
+    printf "]${NC}"
 }
 
 # Remote Access Setup
@@ -218,32 +390,89 @@ open_web_dashboard() {
 
 # System Info
 show_system_info() {
-    echo -e "${BLUE}=== System Information ===${NC}"
+    clear
+    echo -e "${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════════════════╗"
+    echo "║                    💻 System Information 💻                           ║"
+    echo "╚═══════════════════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
     echo ""
     
     # OS Info
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 🖥️  Operating System                                                  ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        echo -e "OS: ${GREEN}$NAME $VERSION_ID${NC}"
+        echo -e "  Name:          ${GREEN}$NAME${NC}"
+        echo -e "  Version:       ${GREEN}$VERSION${NC}"
+        echo -e "  ID:            ${GREEN}$ID${NC}"
     fi
+    echo ""
     
     # Architecture
-    echo -e "Architecture: ${GREEN}$(uname -m)${NC}"
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ ⚙️  Hardware Information                                              ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "  Architecture:  ${GREEN}$(uname -m)${NC}"
+    echo -e "  Kernel:        ${GREEN}$(uname -r)${NC}"
+    echo -e "  Hostname:      ${GREEN}$(hostname)${NC}"
+    echo ""
     
-    # Memory
-    echo -e "Memory: ${GREEN}$(free -h | awk '/^Mem:/{print $2}')${NC}"
+    # Resources
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 📊 System Resources                                                   ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    
+    # Memory (extract values then calculate percentage with bash arithmetic)
+    local mem_total=$(free -h | awk '/^Mem:/{print $2}')
+    local mem_used=$(free -h | awk '/^Mem:/{print $3}')
+    local mem_total_kb=$(free | awk '/^Mem:/{print $2}')
+    local mem_used_kb=$(free | awk '/^Mem:/{print $3}')
+    local mem_percent=$((mem_used_kb * 100 / mem_total_kb))
+    echo -e "  Memory:        ${GREEN}${mem_used}${NC} / ${CYAN}${mem_total}${NC} (${mem_percent}%)"
     
     # CPU
-    echo -e "CPU Cores: ${GREEN}$(nproc)${NC}"
+    echo -e "  CPU Cores:     ${GREEN}$(nproc)${NC}"
+    if [ -f /proc/cpuinfo ]; then
+        local cpu_model=$(grep "model name" /proc/cpuinfo | head -1 | cut -d: -f2 | xargs)
+        if [ -n "$cpu_model" ]; then
+            echo -e "  CPU Model:     ${GREEN}${cpu_model}${NC}"
+        fi
+    fi
     
     # Disk
-    echo -e "Disk: ${GREEN}$(df -h / | awk 'NR==2{print $4}') free${NC}"
+    local disk_total=$(df -h / | awk 'NR==2{print $2}')
+    local disk_used=$(df -h / | awk 'NR==2{print $3}')
+    local disk_free=$(df -h / | awk 'NR==2{print $4}')
+    local disk_percent=$(df -h / | awk 'NR==2{print $5}')
+    echo -e "  Disk Used:     ${GREEN}${disk_used}${NC} / ${CYAN}${disk_total}${NC} (${disk_percent})"
+    echo -e "  Disk Free:     ${GREEN}${disk_free}${NC}"
+    echo ""
+    
+    # Network
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ 🌐 Network Information                                                ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    local ip=$(hostname -I | awk '{print $1}')
+    echo -e "  IP Address:    ${GREEN}${ip}${NC}"
+    if command -v ip &> /dev/null; then
+        local iface=$(ip route | grep default | awk '{print $5}' | head -1)
+        echo -e "  Interface:     ${GREEN}${iface}${NC}"
+    fi
+    echo ""
     
     # Uptime
-    echo -e "Uptime: ${GREEN}$(uptime -p)${NC}"
-    
+    echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║ ⏱️  System Uptime                                                     ║${NC}"
+    echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "  ${GREEN}$(uptime -p)${NC}"
+    echo -e "  Load Average:  ${GREEN}$(uptime | awk -F'load average:' '{print $2}')${NC}"
     echo ""
-    echo -e "Press Enter to continue..."
+    
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║ Press Enter to return to menu...                                      ║${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     read
 }
 

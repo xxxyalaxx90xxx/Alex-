@@ -25,6 +25,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
+BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # Configuration
@@ -49,26 +50,65 @@ CURRENT_STEP=0
 # Helper Functions
 ################################################################################
 
+show_banner() {
+    clear
+    echo -e "${CYAN}${BOLD}"
+    cat << "EOF"
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║    ████████╗███████╗██████╗ ███╗   ███╗██╗   ██╗██╗  ██╗            ║
+║    ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║   ██║╚██╗██╔╝            ║
+║       ██║   █████╗  ██████╔╝██╔████╔██║██║   ██║ ╚███╔╝             ║
+║       ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║   ██║ ██╔██╗             ║
+║       ██║   ███████╗██║  ██║██║ ╚═╝ ██║╚██████╔╝██╔╝ ██╗            ║
+║       ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝            ║
+║                                                                       ║
+║               Complete Automated Installation                         ║
+║                  with Acode IDE & Customization                      ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+EOF
+    echo -e "${NC}"
+    echo -e "${MAGENTA}   Author: Alexander Mathey | Elektronikx-Center-Matte ® ™${NC}"
+    echo ""
+}
+
 log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${GREEN}[$(date +'%H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 error() {
-    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${RED}✗ [ERROR]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${YELLOW}⚠ [WARNING]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 info() {
-    echo -e "${CYAN}[INFO]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${CYAN}ℹ [INFO]${NC} $1" | tee -a "$LOG_FILE"
+}
+
+success() {
+    echo -e "${GREEN}✓ [SUCCESS]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 progress() {
     CURRENT_STEP=$((CURRENT_STEP + 1))
     local percent=$((CURRENT_STEP * 100 / TOTAL_STEPS))
-    echo -e "${MAGENTA}[PROGRESS: $CURRENT_STEP/$TOTAL_STEPS - $percent%]${NC} $1" | tee -a "$LOG_FILE"
+    
+    # Progress bar configuration
+    local BAR_LENGTH=33  # Total length of the progress bar
+    local BAR_SCALE=3    # Scale divisor: percent / BAR_SCALE determines filled bar length
+    local filled=$((percent / BAR_SCALE))
+    local empty=$((BAR_LENGTH - filled))
+    
+    echo ""
+    echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${CYAN}║${NC} Step ${MAGENTA}$CURRENT_STEP${NC}/${MAGENTA}$TOTAL_STEPS${NC} ${CYAN}[${GREEN}$(printf '█%.0s' $(seq 1 $filled))${NC}$(printf '░%.0s' $(seq 1 $empty))${CYAN}]${NC} ${GREEN}$percent%${NC}"
+    echo -e "${BOLD}${CYAN}║${NC} $1"
+    echo -e "${BOLD}${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
 }
 
 check_termux() {
@@ -864,16 +904,16 @@ EOF
 ################################################################################
 
 main() {
-    echo -e "${CYAN}"
-    echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║     Termux + Acode Complete Automated Installer              ║"
-    echo "║     with Style Customization & Optimization                  ║"
-    echo "╚═══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    show_banner
+    
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  📝 Installation Details"
+    echo -e "${CYAN}║${NC}  Log file: ${YELLOW}$LOG_FILE${NC}"
+    echo -e "${CYAN}║${NC}  Install directory: ${YELLOW}$INSTALL_DIR${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     
-    log "Starting installation..."
-    log "Log file: $LOG_FILE"
+    info "Starting comprehensive installation..."
     echo ""
     
     # Pre-installation checks
@@ -893,21 +933,40 @@ main() {
     setup_bashrc
     final_setup
     
+    # Installation complete banner
+    clear
+    echo -e "${GREEN}${BOLD}"
+    cat << "EOF"
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║                     🎉 Installation Complete! 🎉                      ║
+║                                                                       ║
+║         Your Termux environment is now fully configured!             ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+EOF
+    echo -e "${NC}"
+    
+    echo -e "${YELLOW}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║${NC} 📌 Important Next Steps:"
+    echo -e "${YELLOW}║${NC}"
+    echo -e "${YELLOW}║${NC}   ${CYAN}1.${NC} 🔄 Restart Termux to apply all changes"
+    echo -e "${YELLOW}║${NC}   ${CYAN}2.${NC} 📱 Install Termux:API and Termux:Widget from F-Droid"
+    echo -e "${YELLOW}║${NC}   ${CYAN}3.${NC} 📦 Install Acode from: ${GREEN}~/acode-latest.apk${NC}"
+    echo -e "${YELLOW}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}  Installation Complete! 🎉${NC}"
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC} ⚡ Quick Commands:"
+    echo -e "${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}   ${GREEN}termux-style dark${NC}   - Switch to dark theme"
+    echo -e "${CYAN}║${NC}   ${GREEN}termux-style light${NC}  - Switch to light theme"
+    echo -e "${CYAN}║${NC}   ${GREEN}termux-style dracula${NC} - Switch to Dracula theme"
+    echo -e "${CYAN}║${NC}   ${GREEN}cat ~/TERMUX_QUICKSTART.md${NC} - View complete guide"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${YELLOW}Important:${NC}"
-    echo "  1. Restart Termux to apply all changes"
-    echo "  2. Install Termux:API and Termux:Widget from F-Droid"
-    echo "  3. Install Acode from: ~/acode-latest.apk"
-    echo ""
-    echo -e "${CYAN}Quick Commands:${NC}"
-    echo "  termux-style dark        - Switch to dark theme"
-    echo "  cat ~/TERMUX_QUICKSTART.md - View complete guide"
-    echo ""
-    echo -e "${MAGENTA}Enjoy your customized Termux + Acode environment!${NC}"
+    
+    echo -e "${MAGENTA}${BOLD}✨ Enjoy your fully customized Termux + Acode environment! ✨${NC}"
     echo ""
 }
 
