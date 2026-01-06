@@ -319,12 +319,13 @@ generate_bar() {
     local value=$1
     local max=$2
     local bar_length=30
-    local filled=$(awk "BEGIN {printf \"%.0f\", ($value/$max)*$bar_length}")
+    # Use bash arithmetic for better performance
+    local value_int=$(printf "%.0f" "$value" 2>/dev/null || echo 0)
+    local filled=$((value_int * bar_length / max))
     local empty=$((bar_length - filled))
     
     # Color based on percentage
     local color="${GREEN}"
-    local value_int=$(printf "%.0f" "$value")
     if [ "$value_int" -gt 80 ]; then
         color="${RED}"
     elif [ "$value_int" -gt 60 ]; then
@@ -423,10 +424,12 @@ show_system_info() {
     echo -e "${BLUE}║ 📊 System Resources                                                   ║${NC}"
     echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     
-    # Memory
+    # Memory (extract values then calculate percentage with bash arithmetic)
     local mem_total=$(free -h | awk '/^Mem:/{print $2}')
     local mem_used=$(free -h | awk '/^Mem:/{print $3}')
-    local mem_percent=$(free | awk '/^Mem:/{printf "%.0f", ($3/$2)*100}')
+    local mem_total_kb=$(free | awk '/^Mem:/{print $2}')
+    local mem_used_kb=$(free | awk '/^Mem:/{print $3}')
+    local mem_percent=$((mem_used_kb * 100 / mem_total_kb))
     echo -e "  Memory:        ${GREEN}${mem_used}${NC} / ${CYAN}${mem_total}${NC} (${mem_percent}%)"
     
     # CPU

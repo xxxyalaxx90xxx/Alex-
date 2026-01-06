@@ -275,12 +275,13 @@ show_metrics() {
         local threshold=$2
         local label=$3
         local bar_length=40
-        local filled=$(awk "BEGIN {printf \"%.0f\", ($value/100)*$bar_length}")
+        # Use bash arithmetic for better performance
+        local value_int=$(printf "%.0f" "$value" 2>/dev/null || echo 0)
+        local filled=$((value_int * bar_length / 100))
         local empty=$((bar_length - filled))
         
         # Color based on threshold (using integer comparison for better portability)
         local color="${GREEN}"
-        local value_int=$(printf "%.0f" "$value" 2>/dev/null || echo 0)
         local threshold_warn=$((threshold - 10))
         
         if [ "$value_int" -gt "$threshold" ]; then
