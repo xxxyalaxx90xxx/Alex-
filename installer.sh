@@ -65,10 +65,18 @@ ensure_pkg_updated() {
 
 install_packages() {
   log "[2/6] Installing base packages"
-  pkg install -y \
-    python python-pip nodejs golang rust openjdk-17 \
-    tmux git wget curl jq proot-distro \
-    qemu-system-x86_64-headless tigervnc unzip
+  
+  # Install core packages first
+  pkg install -y python python-pip nodejs golang rust openjdk-17 \
+    tmux git wget curl jq || {
+      log "Error: Failed to install core packages" >&2
+      exit 1
+    }
+  
+  # Install optional packages (failures won't stop installation)
+  pkg install -y proot-distro qemu-system-x86_64-headless tigervnc unzip || {
+    log "Warning: Some optional packages failed to install (proot-distro, qemu, vnc)"
+  }
 }
 
 configure_shell() {
@@ -141,12 +149,12 @@ FILES=()
 for file_path in .bashrc .tmux.conf .local/share/termux-auto; do
   [ -e "\${HOME}/\${file_path}" ] && FILES+=("\${file_path}")
 done
-  if [ "\${#FILES[@]}" -eq 0 ]; then
-    echo "No files to backup."
-    exit 0
-  fi
-  tar -czf "\${DEST}" -C "\${HOME}" "\${FILES[@]}"
-  echo "Backup written to \${DEST}"
+if [ "\${#FILES[@]}" -eq 0 ]; then
+  echo "No files to backup."
+  exit 0
+fi
+tar -czf "\${DEST}" -C "\${HOME}" "\${FILES[@]}"
+echo "Backup written to \${DEST}"
 EOF
   cat >"${BIN_DIR}/termux-auto-restore" <<EOF
 #!${PREFIX_EXPECTED}/bin/bash
@@ -195,19 +203,34 @@ ISO_PATH="${ISO_CANDIDATE}"
 DISK_IMG="${VM_DIR}/win10.qcow2"
 VM_RAM=${VM_RAM}
 VM_CORES=${VM_CORES}
+
 mkdir -p "${VM_DIR}"
-if [ ! -f "${ISO_PATH}" ]; then
-  echo "Windows 10 ISO not found at ${ISO_PATH}. Place the ISO there and rerun." >&2
+
+if [ ! -f "\${ISO_PATH}" ]; then
+  echo "Windows 10 ISO not found at \${ISO_PATH}. Place the ISO there and rerun." >&2
   exit 1
 fi
-if [ ! -f "${DISK_IMG}" ]; then
-  qemu-img create -f qcow2 "${DISK_IMG}" 25G
+
+if [ ! -f "\${DISK_IMG}" ]; then
+  echo "Creating virtual disk (\${DISK_IMG})..."
+  qemu-img create -f qcow2 "\${DISK_IMG}" 25G || {
+    echo "Failed to create disk image" >&2
+    exit 1
+  }
 fi
+
 KVM_ARGS=()
-[ -e /dev/kvm ] && KVM_ARGS=(-enable-kvm -cpu host)
-exec qemu-system-x86_64 -m ${VM_RAM} -smp ${VM_CORES} "${KVM_ARGS[@]}" \
-  -drive file="${DISK_IMG}",if=virtio \
-  -cdrom "${ISO_PATH}" -boot once=d -vnc :1 -nic user,model=virtio,restrict=on
+if [ -e /dev/kvm ]; then
+  KVM_ARGS=(-enable-kvm -cpu host)
+  echo "KVM acceleration enabled"
+else
+  echo "Warning: KVM not available, using software emulation (will be slow)"
+fi
+
+echo "Starting VM with \${VM_RAM}MB RAM, \${VM_CORES} cores"
+exec qemu-system-x86_64 -m \${VM_RAM} -smp \${VM_CORES} "\${KVM_ARGS[@]}" \
+  -drive file="\${DISK_IMG}",if=virtio \
+  -cdrom "\${ISO_PATH}" -boot once=d -vnc :1 -nic user,model=virtio,restrict=on
 EOF
   chmod +x "${VM_DIR}/run_win10.sh"
   cat >"${VM_DIR}/profile.json" <<EOF
@@ -246,6 +269,19 @@ self_test() {
 }
 
 detect_resources
+
+log "=========================================="
+log "Termux Auto-Installer Starting"
+log "=========================================="
+log "System Resources:"
+log "  CPU Cores: ${CPU_CORES}"
+log "  RAM: ${TOTAL_MEM_MB} MB"
+log "  Free Storage: ${STORAGE_MB} MB"
+log "  Android: ${ANDROID_VERSION}"
+log "  Kernel: ${KERNEL}"
+log "  Device: ${DEVICE_MODEL}"
+log "=========================================="
+
 ensure_pkg_updated
 install_packages
 configure_shell
@@ -255,5 +291,7 @@ setup_vm_profile
 write_config
 self_test
 
+log "=========================================="
 log "Installation complete. Resources: ${CPU_CORES} cores, ${TOTAL_MEM_MB}MB RAM, ${STORAGE_MB}MB free, Android ${ANDROID_VERSION}, Kernel ${KERNEL}."
 log "Dashboard: ai-dashboard (port 5000). VM runner: vm-win10. Backup: termux-auto-backup / termux-auto-restore."
+log "=========================================="
