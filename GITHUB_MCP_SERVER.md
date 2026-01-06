@@ -42,10 +42,12 @@ The MCP server can use many of the GitHub APIs, so enable the permissions that y
 
 ## GitHub Enterprise Server and Enterprise Cloud with Data Residency (ghe.com)
 
-The flag `--gh-host` and the environment variable `GITHUB_HOST` can be used to set the hostname for GitHub Enterprise Server or GitHub Enterprise Cloud with data residency.
+The environment variable `GITHUB_HOST` can be used to set the hostname for GitHub Enterprise Server or GitHub Enterprise Cloud with data residency.
 
 - **For GitHub Enterprise Server**: Prefix the hostname with the `https://` URI scheme, as it otherwise defaults to `http://`, which GitHub Enterprise Server does not support.
 - **For GitHub Enterprise Cloud with data residency**: Use `https://YOURSUBDOMAIN.ghe.com` as the hostname.
+
+See the [Advanced Configuration](#advanced-configuration) section for complete examples.
 
 ## Installation
 
