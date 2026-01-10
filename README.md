@@ -189,17 +189,68 @@ Choose the right installation script for your needs:
 
 Run the provided script to install kubeadm/kubelet/kubectl, enable containerd CRI, initialize the control plane, apply flannel, and optionally configure hugepages without manual edits:
 
-```
+```bash
 chmod +x install_k8s.sh
 # optionally set ADVERTISE_ADDRESS, POD_CIDR, HUGEPAGES_2MI, KUBECONFIG_FILE
 sudo ./install_k8s.sh
 ```
+
+### Features
+
+The installation script now includes:
+- **Comprehensive logging** with timestamps and color-coded output for better tracking
+- **Automatic validation** of IP addresses and CIDR ranges
+- **Prerequisite checks** to verify system requirements before installation
+- **Retry logic** for network operations (configurable via MAX_RETRIES and RETRY_DELAY)
+- **Progress indicators** for each installation step
+- **Configuration backups** before modifying system files
+- **Health checks** at the end to verify cluster status
+- **Detailed summary** of configuration and cluster state
+- **Error handling** with clear error messages
+- **Dry-run mode** to preview changes without making them
+- **Post-installation tests** to verify cluster functionality
+- **Troubleshooting guidance** for common issues
+
+### Environment Variables
 
 Defaults:
 - `ADVERTISE_ADDRESS`: first host IP (from `hostname -I`)
 - `POD_CIDR`: `10.244.0.0/16`
 - `HUGEPAGES_2MI`: not configured unless set
 - `KUBECONFIG_FILE`: `$HOME/.kube/config`
+- `MAX_RETRIES`: `3` (for network operations)
+- `RETRY_DELAY`: `5` seconds (delay between retries)
+- `STARTUP_WAIT_SECONDS`: `5` seconds (wait time for cluster components to start)
+- `DRY_RUN`: `false` (set to `true` to preview changes without applying them)
+- `SKIP_CHECKS`: `false` (set to `true` to skip prerequisite checks)
+- `ENABLE_COLORS`: `auto` (set to `true` or `false` to force enable/disable colored output)
+
+### Examples
+
+**Basic installation:**
+```bash
+sudo ./install_k8s.sh
+```
+
+**Dry-run to preview changes:**
+```bash
+DRY_RUN=true sudo ./install_k8s.sh
+```
+
+**Custom configuration:**
+```bash
+ADVERTISE_ADDRESS=192.168.1.100 POD_CIDR=10.10.0.0/16 sudo ./install_k8s.sh
+```
+
+**With hugepages:**
+```bash
+HUGEPAGES_2MI=256 sudo ./install_k8s.sh
+```
+
+**Skip prerequisite checks:**
+```bash
+SKIP_CHECKS=true sudo ./install_k8s.sh
+```
 
 ## Install kubelet
 
